@@ -359,7 +359,7 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC hoàn chỉnh -->
+    <!-- JAVASCRIPT LOGIC HOÀN CHỈNH -->
     <script>
         let items = [];
         let logs = [];
@@ -382,6 +382,7 @@
                     renderItems();
                     renderLogs();
                     renderNotes();
+                    updateStats();
                 } catch (e) {
                     loadDataFromJSON();
                 }
@@ -394,6 +395,7 @@
         function saveDataToLocal() {
             const fullData = { items, logs, notes };
             localStorage.setItem('stem_app_data', JSON.stringify(fullData));
+            updateStats();
         }
 
         // LOAD DATA TỪ FILE DATA.JSON TRÊN GITHUB
@@ -414,6 +416,27 @@
             } catch (error) {
                 console.error("Lỗi đọc data.json:", error);
             }
+        }
+
+        // XUẤT DATA.JSON ĐẦY ĐỦ 3 MỤC
+        function exportJSONData() {
+            const fullData = { items, logs, notes };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "data.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        // THỐNG KÊ CHI TIẾT
+        function updateStats() {
+            document.getElementById('stat-loai').innerText = items.length;
+            const totalBorrowed = items.reduce((acc, item) => acc + (item.borrowed || 0), 0);
+            document.getElementById('stat-muon').innerText = totalBorrowed;
+            const totalDevices = items.reduce((acc, item) => acc + (item.total || 0), 0);
+            document.getElementById('stat-tong').innerText = totalDevices;
         }
 
         // CHUYỂN TAB
@@ -450,7 +473,7 @@
         // RENDER DANH SÁCH THIẾT BỊ
         function renderItems() {
             const grid = document.getElementById('equipment-grid');
-            const searchVal = document.getElementById('search-input').value.toLowerCase();
+            const searchVal = (document.getElementById('search-input')?.value || '').toLowerCase();
             grid.innerHTML = '';
 
             const filteredItems = items.filter(item => {
@@ -483,13 +506,16 @@
                     : `<button disabled class="flex-1 bg-slate-800 text-slate-500 py-2.5 rounded-xl text-xs font-semibold cursor-not-allowed">Không thể mượn</button>`;
 
                 const cardHTML = `
-                    <div class="card-bg rounded-2xl overflow-hidden flex flex-col transition hover:border-slate-700">
+                    <div class="card-bg rounded-2xl overflow-hidden flex flex-col transition hover:border-slate-700 relative group">
                         <div class="relative h-48 bg-slate-900">
-                            <img src="${item.img || 'https://via.placeholder.com/300x200?text=No+Image'}" alt="${item.name}" class="w-full h-full object-cover">
+                            <img src="${item.img || 'https://via.placeholder.com/300x200?text=STEM'}" alt="${item.name}" class="w-full h-full object-cover">
                             <label class="absolute bottom-2 right-2 bg-black/60 hover:bg-black text-xs text-white px-3 py-1 rounded-lg backdrop-blur-md transition cursor-pointer flex items-center gap-1">
                                 <i class="fa-solid fa-pen-to-square"></i> Đổi ảnh
                                 <input type="file" accept="image/*" class="hidden" onchange="changeCardImg(event, ${item.id})">
                             </label>
+                            <button onclick="deleteItem(${item.id})" class="absolute top-2 right-2 bg-rose-500/80 hover:bg-rose-600 text-white p-1.5 rounded-lg text-xs transition" title="Xóa thiết bị">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
                         </div>
                         <div class="p-4 flex-1 flex flex-col justify-between space-y-4">
                             <div>
@@ -516,28 +542,25 @@
                                 </div>
                             </div>
 
-                            <select onchange="changeStatus(${item.id}, this.value)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none">
-                                <option value="Cho mượn" ${item.status === 'Cho mượn' ? 'selected' : ''}>Cho mượn</option>
-                                <option value="Cố định" ${item.status === 'Cố định' ? 'selected' : ''}>Cố định (Không mượn)</option>
-                                <option value="Đang hư / Cần sửa chữa" ${item.status === 'Đang hư / Cần sửa chữa' ? 'selected' : ''}>Đang hư / Cần sửa chữa</option>
+                            <select onchange="changeStatus(${item.id}, this.value)" class="w-full bg-slate-900 border border-slate-800 text-xs text-slate-300 rounded-xl px-3 py-2 focus:outline-none">
+                                <option value="Cho mượn" ${item.status === 'Cho mượn' ? 'selected' : ''}>Trạng thái: Cho mượn</option>
+                                <option value="Cố định" ${item.status === 'Cố định' ? 'selected' : ''}>Trạng thái: Cố định</option>
+                                <option value="Đang hư / Cần sửa chữa" ${item.status === 'Đang hư / Cần sửa chữa' ? 'selected' : ''}>Trạng thái: Đang sửa chữa</option>
                             </select>
 
                             <div class="flex gap-2">
                                 ${actionBtn}
-                                <button onclick="deleteItem(${item.id})" class="p-2.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl transition"><i class="fa-solid fa-trash-can"></i></button>
                             </div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
                 grid.innerHTML += cardHTML;
             });
-
-            updateStats();
         }
 
-        // RENDER BẢNG NHẬT KÝ MƯỢN TRẢ
+        // RENDER BẢNG NHẬT KÝ MƯỢN TRẢ (CÓ NÚT XÓA)
         function renderLogs() {
             const tableBody = document.getElementById('logs-table-body');
+            if(!tableBody) return;
             tableBody.innerHTML = '';
 
             logs.forEach(log => {
@@ -546,10 +569,10 @@
                     : `<span class="px-3 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full text-xs font-semibold inline-flex items-center gap-1.5"><i class="fa-solid fa-clock"></i> Đang mượn</span>`;
 
                 const proofHtml = log.proofImg
-                    ? `<a href="${log.proofImg}" target="_blank" class="inline-block w-10 h-10 rounded-lg overflow-hidden border border-slate-700 hover:scale-110 transition"><img src="${log.proofImg}" class="w-full h-full object-cover"></a>`
+                    ? `<a href="${log.proofImg}" target="_blank" class="inline-block w-10 h-10 rounded-lg overflow-hidden border border-slate-700"><img src="${log.proofImg}" class="w-full h-full object-cover"></a>`
                     : `<span class="text-slate-500 italic text-xs">Chưa có ảnh</span>`;
 
-                const row = `
+                tableBody.innerHTML += `
                     <tr class="hover:bg-slate-800/30 transition">
                         <td class="p-4 font-bold text-white">${log.name}</td>
                         <td class="p-4 text-blue-400 font-semibold">${log.class}</td>
@@ -562,109 +585,74 @@
                         <td class="p-4 text-xs text-slate-300 max-w-[150px] truncate">${log.note || '---'}</td>
                         <td class="p-4">${proofHtml}</td>
                         <td class="p-4 text-center">
-                            <button onclick="openReturnModal(${log.id})" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 rounded-lg text-xs font-medium transition flex items-center gap-1 mx-auto">
-                                <i class="fa-solid fa-pen"></i> Sửa / Trả
-                            </button>
+                            <div class="flex items-center justify-center gap-2">
+                                <button onclick="openReturnModal(${log.id})" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 rounded-lg text-xs font-medium transition flex items-center gap-1">
+                                    <i class="fa-solid fa-pen"></i> Sửa / Trả
+                                </button>
+                                <button onclick="deleteLog(${log.id})" class="p-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white border border-rose-500/20 rounded-lg text-xs transition" title="Xóa dòng này">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
                         </td>
-                    </tr>
-                `;
-                tableBody.innerHTML += row;
+                    </tr>`;
             });
         }
 
-        // RENDER DANH SÁCH GHI CHÚ
+        // RENDER GHI CHÚ CLB
         function renderNotes() {
             const grid = document.getElementById('notes-grid');
+            if(!grid) return;
             grid.innerHTML = '';
 
             notes.forEach(note => {
-                const card = `
-                    <div class="card-bg p-5 rounded-2xl space-y-3 relative group border border-slate-800 hover:border-amber-500/50 transition">
-                        <div class="flex justify-between items-start">
-                            <h3 class="font-bold text-lg text-amber-400 line-clamp-1">${note.title}</h3>
-                            <div class="flex items-center gap-2">
-                                <button onclick="openNoteModal(${note.id})" class="text-slate-400 hover:text-amber-400 text-xs transition"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="deleteNote(${note.id})" class="text-slate-400 hover:text-rose-500 text-xs transition"><i class="fa-solid fa-trash"></i></button>
+                grid.innerHTML += `
+                    <div class="card-bg rounded-2xl p-5 border border-slate-800 flex flex-col justify-between space-y-4 hover:border-amber-500/50 transition">
+                        <div>
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-bold text-lg text-amber-400">${note.title}</h3>
+                                <span class="text-[10px] text-slate-500">${note.date}</span>
                             </div>
+                            <p class="text-sm text-slate-300 whitespace-pre-line">${note.content}</p>
                         </div>
-                        <p class="text-xs text-slate-300 whitespace-pre-line leading-relaxed">${note.content}</p>
-                        <div class="pt-2 text-[10px] text-slate-500 border-t border-slate-800/80 flex justify-between">
-                            <span><i class="fa-regular fa-clock mr-1"></i>${note.date}</span>
+                        <div class="flex justify-end gap-2 pt-2 border-t border-slate-800/80">
+                            <button onclick="editNote(${note.id})" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg transition"><i class="fa-solid fa-pen mr-1"></i>Sửa</button>
+                            <button onclick="deleteNote(${note.id})" class="text-xs bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white px-3 py-1.5 rounded-lg transition"><i class="fa-solid fa-trash mr-1"></i>Xóa</button>
                         </div>
-                    </div>
-                `;
-                grid.innerHTML += card;
+                    </div>`;
             });
         }
 
-        // CẬP NHẬT THỐNG KÊ
-        function updateStats() {
-            document.getElementById('stat-loai').innerText = items.length;
-            
-            const totalBorrowed = items.reduce((acc, curr) => acc + (curr.borrowed || 0), 0);
-            document.getElementById('stat-muon').innerText = totalBorrowed;
-
-            const totalQty = items.reduce((acc, curr) => acc + (curr.total || 0), 0);
-            document.getElementById('stat-tong').innerText = totalQty;
-        }
-
-        // CÁC MỞ / ĐÓNG MODAL
-        function openModal(modalId) {
-            document.getElementById(modalId).classList.remove('hidden');
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.add('hidden');
-        }
-
-        // PREVIEW ẢNH KHI THÊM THIẾT BỊ
-        function previewImage(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    selectedImgBase64 = evt.target.result;
-                    document.getElementById('file-label-text').innerText = file.name;
-                };
-                reader.readAsDataURL(file);
+        // CÁC THAO TÁC KHO DỤNG CỤ
+        function updateQty(id, delta) {
+            const item = items.find(i => i.id === id);
+            if (item) {
+                if (item.total + delta < item.borrowed) {
+                    alert("Số lượng tổng không thể nhỏ hơn số lượng đang được mượn!");
+                    return;
+                }
+                item.total = Math.max(1, item.total + delta);
+                saveDataToLocal();
+                renderItems();
             }
         }
 
-        // THÊM THIẾT BỊ MỚI
-        function handleAddItem(e) {
-            e.preventDefault();
-            const name = document.getElementById('item-name').value;
-            const total = parseInt(document.getElementById('item-qty').value);
-            const status = document.getElementById('item-status').value;
-
-            const newItem = {
-                id: Date.now(),
-                name,
-                total,
-                borrowed: 0,
-                status,
-                img: selectedImgBase64 || 'https://via.placeholder.com/300x200?text=STEM+Tool'
-            };
-
-            items.push(newItem);
-            saveDataToLocal();
-            renderItems();
-
-            document.getElementById('add-form').reset();
-            selectedImgBase64 = null;
-            document.getElementById('file-label-text').innerText = 'Chọn tệp ảnh từ máy...';
-            closeModal('add-modal');
+        function changeStatus(id, newStatus) {
+            const item = items.find(i => i.id === id);
+            if (item) {
+                item.status = newStatus;
+                saveDataToLocal();
+                renderItems();
+            }
         }
 
-        // ĐỔI ẢNH THIẾT BỊ
-        function changeCardImg(e, itemId) {
-            const file = e.target.files[0];
+        function changeCardImg(event, itemId) {
+            const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = function(evt) {
+                reader.onload = function(e) {
                     const item = items.find(i => i.id === itemId);
                     if (item) {
-                        item.img = evt.target.result;
+                        item.img = e.target.result;
                         saveDataToLocal();
                         renderItems();
                     }
@@ -673,126 +661,121 @@
             }
         }
 
-        // TĂNG/GIẢM SỐ LƯỢNG THIẾT BỊ GỐC
-        function updateQty(itemId, delta) {
-            const item = items.find(i => i.id === itemId);
-            if (item) {
-                if (item.total + delta >= item.borrowed && item.total + delta >= 1) {
-                    item.total += delta;
-                    saveDataToLocal();
-                    renderItems();
-                } else {
-                    alert("Tổng số lượng không thể nhỏ hơn số lượng đang được mượn!");
-                }
-            }
-        }
-
-        // THAY ĐỔI TRẠNG THÁI THIẾT BỊ
-        function changeStatus(itemId, newStatus) {
-            const item = items.find(i => i.id === itemId);
-            if (item) {
-                item.status = newStatus;
-                saveDataToLocal();
-                renderItems();
-            }
-        }
-
-        // XÓA THIẾT BỊ
         function deleteItem(itemId) {
-            if (confirm("Bạn có chắc chắn muốn xóa dụng cụ này khỏi kho?")) {
+            if (confirm("Bạn có chắc chắn muốn xóa thiết bị này khỏi kho?")) {
                 items = items.filter(i => i.id !== itemId);
                 saveDataToLocal();
                 renderItems();
             }
         }
 
-        // MỞ MODAL MƯỢN ĐỒ
+        function handleAddItem(e) {
+            e.preventDefault();
+            const name = document.getElementById('item-name').value;
+            const qty = parseInt(document.getElementById('item-qty').value);
+            const status = document.getElementById('item-status').value;
+
+            const newItem = {
+                id: Date.now(),
+                name: name,
+                total: qty,
+                borrowed: 0,
+                status: status,
+                img: selectedImgBase64 || 'https://via.placeholder.com/300x200?text=STEM'
+            };
+
+            items.push(newItem);
+            saveDataToLocal();
+            renderItems();
+            closeModal('add-modal');
+            document.getElementById('add-form').reset();
+            selectedImgBase64 = null;
+        }
+
+        function previewImage(e) {
+            const file = e.target.files[0];
+            if(file) {
+                document.getElementById('file-label-text').innerText = file.name;
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    selectedImgBase64 = evt.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // CÁC THAO TÁC MƯỢN TRẢ
         function openBorrowModal(itemId) {
             const item = items.find(i => i.id === itemId);
             if (!item) return;
 
             const maxBorrow = item.total - item.borrowed;
             document.getElementById('borrow-item-id').value = item.id;
-            document.getElementById('borrow-item-title').innerText = `Mượn: ${item.name} (Sẵn có: ${maxBorrow})`;
+            document.getElementById('borrow-item-title').innerText = `Mượn: ${item.name} (Tối đa mượn: ${maxBorrow})`;
             document.getElementById('borrow-max-label').innerText = `Số lượng mượn (Tối đa: ${maxBorrow})`;
-
+            
             const qtyInput = document.getElementById('borrow-qty');
             qtyInput.max = maxBorrow;
             qtyInput.value = 1;
 
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('borrow-date').value = today;
-            
+
             openModal('borrow-modal');
         }
 
-        // XỬ LÝ ĐĂNG KÝ MƯỢN
         function handleBorrowSubmit(e) {
             e.preventDefault();
             const itemId = parseInt(document.getElementById('borrow-item-id').value);
-            const name = document.getElementById('borrow-name').value;
-            const className = document.getElementById('borrow-class').value;
-            const qty = parseInt(document.getElementById('borrow-qty').value);
-            const purpose = document.getElementById('borrow-purpose').value;
-            const borrowDate = document.getElementById('borrow-date').value;
-            const returnDate = document.getElementById('borrow-return-date').value;
-
             const item = items.find(i => i.id === itemId);
-            if (!item) return;
+            const qty = parseInt(document.getElementById('borrow-qty').value);
 
-            const available = item.total - item.borrowed;
-            if (qty > available) {
-                alert("Số lượng mượn vượt quá số lượng sẵn có trong kho!");
-                return;
-            }
+            if (!item) return;
 
             item.borrowed += qty;
 
             const newLog = {
                 id: Date.now(),
-                itemId,
+                itemId: item.id,
                 itemName: item.name,
-                name,
-                class: className,
-                qty,
-                purpose,
-                borrowDate,
-                returnDate,
+                name: document.getElementById('borrow-name').value,
+                class: document.getElementById('borrow-class').value,
+                qty: qty,
+                purpose: document.getElementById('borrow-purpose').value,
+                borrowDate: document.getElementById('borrow-date').value,
+                returnDate: document.getElementById('borrow-return-date').value,
                 status: 'Đang mượn',
                 note: '',
-                proofImg: null
+                proofImg: ''
             };
 
             logs.unshift(newLog);
             saveDataToLocal();
             renderItems();
             renderLogs();
-
-            document.getElementById('borrow-form').reset();
             closeModal('borrow-modal');
+            document.getElementById('borrow-form').reset();
         }
 
-        // MỞ MODAL TRẢ ĐỒ
         function openReturnModal(logId) {
             const log = logs.find(l => l.id === logId);
-            if (!log) return;
+            if(!log) return;
 
             document.getElementById('return-log-id').value = log.id;
-            document.getElementById('return-item-info').innerText = `Người mượn: ${log.name} - ${log.itemName} (${log.qty} cái)`;
+            document.getElementById('return-item-info').innerText = `Người mượn: ${log.name} (${log.class}) - Mượn: ${log.itemName} (SL: ${log.qty})`;
+
+            const toggle = document.getElementById('return-toggle-status');
+            toggle.checked = (log.status === 'Đã trả đồ');
+            toggleStatusText(toggle);
+
             document.getElementById('return-note').value = log.note || '';
-
-            const checkbox = document.getElementById('return-toggle-status');
-            checkbox.checked = (log.status === 'Đã trả đồ');
-            toggleStatusText(checkbox);
-
-            const previewBox = document.getElementById('return-img-preview-box');
-            const previewImg = document.getElementById('return-img-preview');
-            if (log.proofImg) {
-                previewImg.src = log.proofImg;
-                previewBox.classList.remove('hidden');
+            
+            if(log.proofImg) {
+                document.getElementById('return-img-preview').src = log.proofImg;
+                document.getElementById('return-img-preview-box').classList.remove('hidden');
                 selectedReturnImgBase64 = log.proofImg;
             } else {
-                previewBox.classList.add('hidden');
+                document.getElementById('return-img-preview-box').classList.add('hidden');
                 selectedReturnImgBase64 = null;
             }
 
@@ -812,7 +795,7 @@
 
         function previewReturnImage(e) {
             const file = e.target.files[0];
-            if (file) {
+            if(file) {
                 const reader = new FileReader();
                 reader.onload = function(evt) {
                     selectedReturnImgBase64 = evt.target.result;
@@ -823,31 +806,26 @@
             }
         }
 
-        // LƯU CẬP NHẬT TRẢ ĐỒ
         function handleReturnSubmit(e) {
             e.preventDefault();
             const logId = parseInt(document.getElementById('return-log-id').value);
-            const isReturned = document.getElementById('return-toggle-status').checked;
-            const note = document.getElementById('return-note').value;
-
             const log = logs.find(l => l.id === logId);
             if (!log) return;
 
-            const previousStatus = log.status;
-            log.status = isReturned ? 'Đã trả đồ' : 'Đang mượn';
-            log.note = note;
-            if (selectedReturnImgBase64) {
-                log.proofImg = selectedReturnImgBase64;
-            }
+            const isReturned = document.getElementById('return-toggle-status').checked;
+            const prevStatus = log.status;
 
-            // Hoàn trả số lượng kho nếu trạng thái đổi thành "Đã trả đồ"
-            const item = items.find(i => i.id === log.itemId);
-            if (item) {
-                if (previousStatus === 'Đang mượn' && isReturned) {
-                    item.borrowed = Math.max(0, item.borrowed - log.qty);
-                } else if (previousStatus === 'Đã trả đồ' && !isReturned) {
-                    item.borrowed += log.qty;
-                }
+            log.status = isReturned ? 'Đã trả đồ' : 'Đang mượn';
+            log.note = document.getElementById('return-note').value;
+            if(selectedReturnImgBase64) log.proofImg = selectedReturnImgBase64;
+
+            // Xử lý hoàn trả số lượng kho
+            if (prevStatus === 'Đang mượn' && isReturned) {
+                const item = items.find(i => i.id === log.itemId);
+                if (item) item.borrowed = Math.max(0, item.borrowed - log.qty);
+            } else if (prevStatus === 'Đã trả đồ' && !isReturned) {
+                const item = items.find(i => i.id === log.itemId);
+                if (item) item.borrowed += log.qty;
             }
 
             saveDataToLocal();
@@ -856,24 +834,35 @@
             closeModal('return-modal');
         }
 
-        // QUẢN LÝ GHI CHÚ
-        function openNoteModal(noteId = null) {
-            const form = document.getElementById('note-form');
-            form.reset();
-
-            if (noteId) {
-                const note = notes.find(n => n.id === noteId);
-                if (note) {
-                    document.getElementById('note-id').value = note.id;
-                    document.getElementById('note-title').value = note.title;
-                    document.getElementById('note-content').value = note.content;
-                    document.getElementById('note-modal-title').innerText = 'Chỉnh Sửa Ghi Chú';
+        function deleteLog(logId) {
+            if (confirm("Bạn có chắc chắn muốn xóa dòng nhật ký mượn/trả này không?")) {
+                const log = logs.find(l => l.id === logId);
+                if (log && log.status === 'Đang mượn') {
+                    const item = items.find(i => i.id === log.itemId);
+                    if (item) item.borrowed = Math.max(0, item.borrowed - log.qty);
                 }
-            } else {
-                document.getElementById('note-id').value = '';
-                document.getElementById('note-modal-title').innerText = 'Thêm Ghi Chú Mới';
+                logs = logs.filter(l => l.id !== logId);
+                saveDataToLocal();
+                renderItems();
+                renderLogs();
             }
+        }
 
+        // CÁC THAO TÁC GHI CHÚ CLB
+        function openNoteModal() {
+            document.getElementById('note-id').value = '';
+            document.getElementById('note-modal-title').innerText = 'Thêm Ghi Chú Mới';
+            document.getElementById('note-form').reset();
+            openModal('note-modal');
+        }
+
+        function editNote(id) {
+            const note = notes.find(n => n.id === id);
+            if(!note) return;
+            document.getElementById('note-id').value = note.id;
+            document.getElementById('note-modal-title').innerText = 'Sửa Ghi Chú';
+            document.getElementById('note-title').value = note.title;
+            document.getElementById('note-content').value = note.content;
             openModal('note-modal');
         }
 
@@ -882,23 +871,21 @@
             const id = document.getElementById('note-id').value;
             const title = document.getElementById('note-title').value;
             const content = document.getElementById('note-content').value;
-            const dateStr = new Date().toLocaleDateString('vi-VN');
+            const today = new Date().toLocaleDateString('vi-VN');
 
-            if (id) {
+            if(id) {
                 const note = notes.find(n => n.id === parseInt(id));
-                if (note) {
+                if(note) {
                     note.title = title;
                     note.content = content;
-                    note.date = dateStr;
                 }
             } else {
-                const newNote = {
+                notes.unshift({
                     id: Date.now(),
-                    title,
-                    content,
-                    date: dateStr
-                };
-                notes.unshift(newNote);
+                    title: title,
+                    content: content,
+                    date: today
+                });
             }
 
             saveDataToLocal();
@@ -906,28 +893,21 @@
             closeModal('note-modal');
         }
 
-        function deleteNote(noteId) {
-            if (confirm("Bạn có chắc muốn xóa ghi chú này?")) {
-                notes = notes.filter(n => n.id !== noteId);
+        function deleteNote(id) {
+            if(confirm("Xóa ghi chú này?")) {
+                notes = notes.filter(n => n.id !== id);
                 saveDataToLocal();
                 renderNotes();
             }
         }
 
-        // XUẤT FILE DATA.JSON ĐỂ CẬP NHẬT LÊN GITHUB
-        function exportJSONData() {
-            const exportData = { items, logs, notes };
-            const jsonStr = JSON.stringify(exportData, null, 4);
-            const blob = new Blob([jsonStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
+        // HELPER MODAL
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
 
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'data.json';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
         }
     </script>
 </body>
