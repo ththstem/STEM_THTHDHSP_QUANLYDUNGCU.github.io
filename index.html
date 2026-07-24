@@ -66,7 +66,7 @@
                 </div>
             </div>
             
-            <!-- NAVIGATION TABS -->
+            <!-- NAVIGATION TABS & ADMIN BUTTON -->
             <div class="flex items-center gap-3 flex-wrap justify-center">
                 <div class="flex bg-slate-900/90 p-1.5 rounded-xl border border-slate-800 flex-wrap justify-center gap-1">
                     <button onclick="switchTab('kho')" id="btn-kho" class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 tab-active flex items-center gap-2">
@@ -75,10 +75,16 @@
                     <button onclick="switchTab('nhatky')" id="btn-nhatky" class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-slate-400 hover:text-white flex items-center gap-2">
                         <i class="fa-solid fa-clipboard-list"></i> Nhật Ký Mượn Trả
                     </button>
-                    <button onclick="switchTab('ghichu')" id="btn-ghichu" class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-slate-400 hover:text-white flex items-center gap-2">
+                    <button onclick="switchTab('ghichu')" id="btn-ghichu" class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-slate-400 hover:text-white flex items-center gap-2 relative">
                         <i class="fa-solid fa-note-sticky"></i> Ghi Chú CLB
+                        <i id="lock-icon-ghichu" class="fa-solid fa-lock text-xs text-amber-400 ml-1"></i>
                     </button>
                 </div>
+
+                <!-- NÚT ĐĂNG NHẬP / ĐĂNG XUẤT ADMIN -->
+                <button id="btn-admin-auth" onclick="toggleAdminLogin()" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-key"></i> <span id="admin-auth-text">Đăng nhập Admin</span>
+                </button>
 
                 <button onclick="exportJSONData()" title="Xuất file JSON để commit lên Github" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-lg transition">
                     <i class="fa-solid fa-file-export"></i> Xuất data.json
@@ -132,7 +138,8 @@
                         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
                         <input type="text" id="search-input" oninput="renderItems()" placeholder="Tìm tên thiết bị..." class="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm focus:outline-none focus:border-blue-500 transition">
                     </div>
-                    <button onclick="openModal('add-modal')" class="custom-blue text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 shadow-lg shadow-cyan-500/20 hover:scale-105 transition-all duration-200">
+                    <!-- NÚT THÊM DỤNG CỤ (CHỈ CHO ADMIN) -->
+                    <button id="btn-add-item" onclick="openModal('add-modal')" class="hidden custom-blue text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 shadow-lg shadow-cyan-500/20 hover:scale-105 transition-all duration-200">
                         <i class="fa-solid fa-plus"></i> Thêm Dụng Cụ
                     </button>
                 </div>
@@ -172,9 +179,8 @@
                             <th class="p-4">Trạng thái</th>
                             <th class="p-4">Ghi chú khi trả</th>
                             <th class="p-4">Minh chứng trả đồ</th>
-                            <!-- THÊM CỘT THỜI GIAN CẬP NHẬT -->
                             <th class="p-4 text-emerald-400"><i class="fa-solid fa-clock mr-1"></i>Lần cuối cập nhật</th>
-                            <th class="p-4 text-center">Thao tác</th>
+                            <th class="p-4 text-center admin-only-col hidden">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody id="logs-table-body" class="divide-y divide-slate-800"></tbody>
@@ -200,6 +206,31 @@
     </div>
 
     <!-- MODALS -->
+    <!-- MODAL ĐĂNG NHẬP ADMIN -->
+    <div id="admin-login-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="card-bg w-full max-w-sm rounded-2xl p-6 space-y-4 border border-amber-500/40 shadow-2xl relative">
+            <div class="text-center">
+                <div class="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center mx-auto mb-2 text-xl border border-amber-500/20">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white">Đăng Nhập Admin</h3>
+                <p class="text-xs text-slate-400">Dành cho Ban Chủ Nhiệm CLB STEM THTH</p>
+            </div>
+            
+            <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1.5 font-medium">Nhập Mã PIN Admin</label>
+                    <input type="password" id="admin-pin-input" required placeholder="Mã PIN bảo mật..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-amber-500 text-amber-300 font-mono tracking-wider">
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeModal('admin-login-modal')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-2 rounded-xl text-xs transition">Hủy</button>
+                    <button type="submit" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-medium py-2 rounded-xl text-xs shadow-lg shadow-amber-500/20 transition">Xác Nhận</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL 1: THÊM THIẾT BỊ MỚI -->
     <div id="add-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="card-bg w-full max-w-md rounded-2xl p-6 space-y-5 border border-slate-700 shadow-2xl relative">
@@ -370,6 +401,10 @@
 
     <!-- JAVASCRIPT LOGIC DỒN VÀO MỘT FILE -->
     <script>
+        // MÃ PIN ADMIN ĐƯỢC THIẾT LẬP THEO YÊU CẦU
+        const ADMIN_PIN = "ththstem.admin@03092020";
+        let isAdmin = false;
+
         let items = [];
         let logs = [];
         let notes = [];
@@ -379,6 +414,59 @@
         let activeFilter = 'all';
         let selectedImgBase64 = null;
         let selectedReturnImgBase64 = null;
+
+        // XỬ LÝ ĐĂNG NHẬP / ĐĂNG XUẤT ADMIN
+        function toggleAdminLogin() {
+            if (isAdmin) {
+                // Đăng xuất
+                isAdmin = false;
+                updateAdminUI();
+                alert("Đã đăng xuất khỏi chế độ Admin!");
+                if (currentTab === 'ghichu') {
+                    switchTab('kho');
+                }
+            } else {
+                // Mở modal đăng nhập
+                document.getElementById('admin-pin-input').value = '';
+                openModal('admin-login-modal');
+            }
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const pin = document.getElementById('admin-pin-input').value.trim();
+            if (pin === ADMIN_PIN) {
+                isAdmin = true;
+                closeModal('admin-login-modal');
+                updateAdminUI();
+                alert("Đăng nhập Admin thành công!");
+            } else {
+                alert("Mã PIN không chính xác. Vui lòng thử lại!");
+            }
+        }
+
+        // CẬP NHẬT GIAO DIỆN THEO QUYỀN ADMIN
+        function updateAdminUI() {
+            const btnAuthText = document.getElementById('admin-auth-text');
+            const btnAddItem = document.getElementById('btn-add-item');
+            const lockIconGhiChu = document.getElementById('lock-icon-ghichu');
+            const adminCols = document.querySelectorAll('.admin-only-col');
+
+            if (isAdmin) {
+                btnAuthText.innerText = 'Đăng xuất Admin';
+                btnAddItem.classList.remove('hidden');
+                if (lockIconGhiChu) lockIconGhiChu.classList.add('hidden');
+                adminCols.forEach(col => col.classList.remove('hidden'));
+            } else {
+                btnAuthText.innerText = 'Đăng nhập Admin';
+                btnAddItem.classList.add('hidden');
+                if (lockIconGhiChu) lockIconGhiChu.classList.remove('hidden');
+                adminCols.forEach(col => col.classList.add('hidden'));
+            }
+
+            renderItems();
+            renderLogs();
+        }
 
         // HÀM ĐỊNH DẠNG THỜI GIAN REALTIME: HH:mm:ss - DD/MM/YYYY
         function getFormattedDateTime() {
@@ -443,8 +531,7 @@
                     
                     document.getElementById('last-updated-time').innerText = lastUpdated;
 
-                    renderItems();
-                    renderLogs();
+                    updateAdminUI();
                     renderNotes();
                     updateStats();
                 } catch (e) {
@@ -472,8 +559,7 @@
                 document.getElementById('last-updated-time').innerText = lastUpdated;
 
                 saveDataToLocal();
-                renderItems();
-                renderLogs();
+                updateAdminUI();
                 renderNotes();
             } catch (error) {
                 console.error("Lỗi đọc data.json:", error);
@@ -506,8 +592,16 @@
             document.getElementById('stat-tong').innerText = totalDevices;
         }
 
-        // CHUYỂN TAB
+        // CHUYỂN TAB - PHÂN QUYỀN VỚI TAB GHI CHÚ
         function switchTab(tabName) {
+            // Kiểm tra phân quyền khi vào tab ghi chú
+            if (tabName === 'ghichu' && !isAdmin) {
+                alert("Chỉ Ban Chủ Nhiệm (Admin) mới có quyền truy cập vào Sổ Ghi Chú CLB!");
+                document.getElementById('admin-pin-input').value = '';
+                openModal('admin-login-modal');
+                return;
+            }
+
             currentTab = tabName;
             ['kho', 'nhatky', 'ghichu'].forEach(t => {
                 document.getElementById(`tab-${t}`).classList.add('hidden');
@@ -537,7 +631,7 @@
             renderItems();
         }
 
-        // RENDER DANH SÁCH THIẾT BỊ
+        // RENDER DANH SÁCH THIẾT BỊ (CÓ BẢO VỆ ADMIN UI)
         function renderItems() {
             const grid = document.getElementById('equipment-grid');
             const searchVal = (document.getElementById('search-input')?.value || '').toLowerCase();
@@ -572,17 +666,39 @@
                     ? `<button onclick="openBorrowModal(${item.id})" class="flex-1 custom-blue text-white py-2.5 rounded-xl text-xs font-semibold shadow-lg shadow-cyan-500/20 hover:scale-[1.02] transition">Mượn đồ</button>`
                     : `<button disabled class="flex-1 bg-slate-800 text-slate-500 py-2.5 rounded-xl text-xs font-semibold cursor-not-allowed">Không thể mượn</button>`;
 
+                // UI ADMIN VS HỌC SINH
+                const adminImageEdit = isAdmin 
+                    ? `<label class="absolute bottom-2 right-2 bg-black/60 hover:bg-black text-xs text-white px-3 py-1 rounded-lg backdrop-blur-md transition cursor-pointer flex items-center gap-1">
+                        <i class="fa-solid fa-pen-to-square"></i> Đổi ảnh
+                        <input type="file" accept="image/*" class="hidden" onchange="changeCardImg(event, ${item.id})">
+                       </label>` : '';
+
+                const adminDeleteBtn = isAdmin 
+                    ? `<button onclick="deleteItem(${item.id})" class="absolute top-2 right-2 bg-rose-500/80 hover:bg-rose-600 text-white p-1.5 rounded-lg text-xs transition" title="Xóa thiết bị">
+                        <i class="fa-solid fa-trash-can"></i>
+                       </button>` : '';
+
+                const qtyControls = isAdmin 
+                    ? `<div class="flex items-center gap-2 bg-slate-800 px-2 py-0.5 rounded-lg text-white font-medium">
+                        <button onclick="updateQty(${item.id}, -1)" class="hover:text-blue-400 px-1">-</button>
+                        <span>${item.total}</span>
+                        <button onclick="updateQty(${item.id}, 1)" class="hover:text-blue-400 px-1">+</button>
+                       </div>` 
+                    : `<span class="text-white font-medium">${item.total}</span>`;
+
+                const adminStatusSelect = isAdmin 
+                    ? `<select onchange="changeStatus(${item.id}, this.value)" class="w-full bg-slate-900 border border-slate-800 text-xs text-slate-300 rounded-xl px-3 py-2 focus:outline-none">
+                        <option value="Cho mượn" ${item.status === 'Cho mượn' ? 'selected' : ''}>Trạng thái: Cho mượn</option>
+                        <option value="Cố định" ${item.status === 'Cố định' ? 'selected' : ''}>Trạng thái: Cố định</option>
+                        <option value="Đang hư / Cần sửa chữa" ${item.status === 'Đang hư / Cần sửa chữa' ? 'selected' : ''}>Trạng thái: Đang sửa chữa</option>
+                       </select>` : '';
+
                 const cardHTML = `
                     <div class="card-bg rounded-2xl overflow-hidden flex flex-col transition hover:border-slate-700 relative group">
                         <div class="relative h-48 bg-slate-900">
                             <img src="${item.img || 'https://via.placeholder.com/300x200?text=STEM'}" alt="${item.name}" class="w-full h-full object-cover">
-                            <label class="absolute bottom-2 right-2 bg-black/60 hover:bg-black text-xs text-white px-3 py-1 rounded-lg backdrop-blur-md transition cursor-pointer flex items-center gap-1">
-                                <i class="fa-solid fa-pen-to-square"></i> Đổi ảnh
-                                <input type="file" accept="image/*" class="hidden" onchange="changeCardImg(event, ${item.id})">
-                            </label>
-                            <button onclick="deleteItem(${item.id})" class="absolute top-2 right-2 bg-rose-500/80 hover:bg-rose-600 text-white p-1.5 rounded-lg text-xs transition" title="Xóa thiết bị">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
+                            ${adminImageEdit}
+                            ${adminDeleteBtn}
                         </div>
                         <div class="p-4 flex-1 flex flex-col justify-between space-y-4">
                             <div>
@@ -593,11 +709,7 @@
                             <div class="bg-slate-900/50 p-3 rounded-xl space-y-2 text-xs border border-slate-800/80">
                                 <div class="flex justify-between items-center text-slate-400">
                                     <span>Tổng:</span>
-                                    <div class="flex items-center gap-2 bg-slate-800 px-2 py-0.5 rounded-lg text-white font-medium">
-                                        <button onclick="updateQty(${item.id}, -1)" class="hover:text-blue-400 px-1">-</button>
-                                        <span>${item.total}</span>
-                                        <button onclick="updateQty(${item.id}, 1)" class="hover:text-blue-400 px-1">+</button>
-                                    </div>
+                                    ${qtyControls}
                                 </div>
                                 <div class="flex justify-between text-slate-400">
                                     <span>Đang mượn:</span>
@@ -609,11 +721,7 @@
                                 </div>
                             </div>
 
-                            <select onchange="changeStatus(${item.id}, this.value)" class="w-full bg-slate-900 border border-slate-800 text-xs text-slate-300 rounded-xl px-3 py-2 focus:outline-none">
-                                <option value="Cho mượn" ${item.status === 'Cho mượn' ? 'selected' : ''}>Trạng thái: Cho mượn</option>
-                                <option value="Cố định" ${item.status === 'Cố định' ? 'selected' : ''}>Trạng thái: Cố định</option>
-                                <option value="Đang hư / Cần sửa chữa" ${item.status === 'Đang hư / Cần sửa chữa' ? 'selected' : ''}>Trạng thái: Đang sửa chữa</option>
-                            </select>
+                            ${adminStatusSelect}
 
                             <div class="flex gap-2">
                                 ${actionBtn}
@@ -624,7 +732,7 @@
             });
         }
 
-        // RENDER BẢNG NHẬT KÝ MƯỢN TRẢ (CÓ THỜI GIAN CẬP NHẬT TỪNG DÒNG)
+        // RENDER BẢNG NHẬT KÝ MƯỢN TRẢ (PHÂN QUYỀN ADMIN XỬ LÝ)
         function renderLogs() {
             const tableBody = document.getElementById('logs-table-body');
             if(!tableBody) return;
@@ -639,10 +747,22 @@
                     ? `<a href="${log.proofImg}" target="_blank" class="inline-block w-10 h-10 rounded-lg overflow-hidden border border-slate-700"><img src="${log.proofImg}" class="w-full h-full object-cover"></a>`
                     : `<span class="text-slate-500 italic text-xs">Chưa có ảnh</span>`;
 
-                // HIỂN THỊ THỜI GIAN CẬP NHẬT TỪNG DÒNG
                 const updatedTimeHtml = log.updatedAt 
                     ? `<span class="text-xs font-mono text-emerald-400 font-semibold bg-emerald-950/40 px-2.5 py-1 rounded-md border border-emerald-800/40">${log.updatedAt}</span>`
                     : `<span class="text-slate-500 italic text-xs">Chưa ghi nhận</span>`;
+
+                const adminActions = isAdmin 
+                    ? `<td class="p-4 text-center admin-only-col">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="openReturnModal(${log.id})" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 rounded-lg text-xs font-medium transition flex items-center gap-1">
+                                <i class="fa-solid fa-pen"></i> Sửa / Trả
+                            </button>
+                            <button onclick="deleteLog(${log.id})" class="p-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white border border-rose-500/20 rounded-lg text-xs transition" title="Xóa dòng này">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                       </td>` 
+                    : `<td class="p-4 text-center admin-only-col hidden"></td>`;
 
                 tableBody.innerHTML += `
                     <tr class="hover:bg-slate-800/30 transition">
@@ -657,16 +777,7 @@
                         <td class="p-4 text-xs text-slate-300 max-w-[150px] truncate">${log.note || '---'}</td>
                         <td class="p-4">${proofHtml}</td>
                         <td class="p-4">${updatedTimeHtml}</td>
-                        <td class="p-4 text-center">
-                            <div class="flex items-center justify-center gap-2">
-                                <button onclick="openReturnModal(${log.id})" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 rounded-lg text-xs font-medium transition flex items-center gap-1">
-                                    <i class="fa-solid fa-pen"></i> Sửa / Trả
-                                </button>
-                                <button onclick="deleteLog(${log.id})" class="p-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white border border-rose-500/20 rounded-lg text-xs transition" title="Xóa dòng này">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            </div>
-                        </td>
+                        ${adminActions}
                     </tr>`;
             });
         }
@@ -695,8 +806,9 @@
             });
         }
 
-        // THAO TÁC TRÊN KHO
+        // THAO TÁC TRÊN KHO (CÓ BẢO VỆ QUYỀN ADMIN)
         function updateQty(id, delta) {
+            if (!isAdmin) return;
             const item = items.find(i => i.id === id);
             if (item) {
                 if (item.total + delta < item.borrowed) {
@@ -710,6 +822,7 @@
         }
 
         function changeStatus(id, newStatus) {
+            if (!isAdmin) return;
             const item = items.find(i => i.id === id);
             if (item) {
                 item.status = newStatus;
@@ -719,6 +832,7 @@
         }
 
         function changeCardImg(event, itemId) {
+            if (!isAdmin) return;
             const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
@@ -735,6 +849,7 @@
         }
 
         function deleteItem(itemId) {
+            if (!isAdmin) return;
             if (confirm("Xóa dụng cụ này khỏi hệ thống?")) {
                 items = items.filter(i => i.id !== itemId);
                 syncBorrowedCount();
@@ -745,6 +860,7 @@
 
         function handleAddItem(e) {
             e.preventDefault();
+            if (!isAdmin) return;
             const name = document.getElementById('item-name').value;
             const qty = parseInt(document.getElementById('item-qty').value);
             const status = document.getElementById('item-status').value;
@@ -778,7 +894,7 @@
             }
         }
 
-        // THAO TÁC MƯỢN TRẢ - LƯU THỜI GIAN CẬP NHẬT REALTIME CHO DÒNG
+        // THAO TÁC MƯỢN TRẢ
         function openBorrowModal(itemId) {
             const item = items.find(i => i.id === itemId);
             if (!item) return;
@@ -821,7 +937,7 @@
                 status: 'Đang mượn',
                 note: '',
                 proofImg: '',
-                updatedAt: currentTime // Lưu Giờ:Phút:Giây Ngày/Tháng/Năm tạo phiếu mượn
+                updatedAt: currentTime
             };
 
             logs.unshift(newLog);
@@ -834,6 +950,7 @@
         }
 
         function openReturnModal(logId) {
+            if (!isAdmin) return;
             const log = logs.find(l => l.id === logId);
             if(!log) return;
 
@@ -884,6 +1001,7 @@
 
         function handleReturnSubmit(e) {
             e.preventDefault();
+            if (!isAdmin) return;
             const logId = parseInt(document.getElementById('return-log-id').value);
             const log = logs.find(l => l.id === logId);
             if (!log) return;
@@ -894,7 +1012,7 @@
             log.note = document.getElementById('return-note').value;
             if(selectedReturnImgBase64) log.proofImg = selectedReturnImgBase64;
 
-            log.updatedAt = getFormattedDateTime(); // Cập nhật lại Giờ:Phút:Giây mỗi khi bấm nút Sửa / Trả đồ
+            log.updatedAt = getFormattedDateTime();
 
             syncBorrowedCount();
             saveDataToLocal();
@@ -904,6 +1022,7 @@
         }
 
         function deleteLog(logId) {
+            if (!isAdmin) return;
             if (confirm("Bạn có chắc muốn xóa dòng lịch sử mượn trả này?")) {
                 logs = logs.filter(l => l.id !== logId);
                 syncBorrowedCount();
@@ -915,6 +1034,7 @@
 
         // THAO TÁC GHI CHÚ
         function openNoteModal() {
+            if (!isAdmin) return;
             document.getElementById('note-id').value = '';
             document.getElementById('note-modal-title').innerText = 'Thêm Ghi Chú Mới';
             document.getElementById('note-form').reset();
@@ -922,6 +1042,7 @@
         }
 
         function editNote(id) {
+            if (!isAdmin) return;
             const note = notes.find(n => n.id === id);
             if(!note) return;
             document.getElementById('note-id').value = note.id;
@@ -933,6 +1054,7 @@
 
         function handleSaveNote(e) {
             e.preventDefault();
+            if (!isAdmin) return;
             const id = document.getElementById('note-id').value;
             const title = document.getElementById('note-title').value;
             const content = document.getElementById('note-content').value;
@@ -959,6 +1081,7 @@
         }
 
         function deleteNote(id) {
+            if (!isAdmin) return;
             if(confirm("Xóa ghi chú này?")) {
                 notes = notes.filter(n => n.id !== id);
                 saveDataToLocal();
