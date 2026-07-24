@@ -55,7 +55,15 @@
                 </div>
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold tracking-tight text-blue-400">CLB STEM THTH – ĐHSP</h1>
-                    <p class="text-[10px] text-cyan-400 font-medium"><i class="fa-solid fa-cloud-arrow-down mr-1"></i>Dữ liệu đồng bộ từ GitHub (data.json)</p>
+                    <p class="text-[10px] text-cyan-400 font-medium flex items-center gap-1">
+                        <i class="fa-solid fa-cloud-arrow-down"></i>
+                        <span>Dữ liệu đồng bộ từ GitHub (data.json)</span>
+                    </p>
+                    <!-- THỜI GIAN CẬP NHẬT REALTIME -->
+                    <p class="text-[11px] text-emerald-400 font-semibold mt-0.5 flex items-center gap-1">
+                        <i class="fa-solid fa-clock"></i>
+                        <span>Cập nhật lần cuối: <span id="last-updated-time" class="text-white font-bold">Chưa có dữ liệu</span></span>
+                    </p>
                 </div>
             </div>
             
@@ -359,18 +367,67 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC HOÀN CHỈNH -->
+    <!-- JAVASCRIPT LOGIC DỒN VÀO MỘT FILE -->
     <script>
         let items = [];
         let logs = [];
         let notes = [];
+        let lastUpdated = '';
         let currentTab = 'kho';
 
         let activeFilter = 'all';
         let selectedImgBase64 = null;
         let selectedReturnImgBase64 = null;
 
-        // Khởi chạy khi load trang
+        // HÀM ĐỊNH DẠNG THỜI GIAN REALTIME: HH:mm:ss - DD/MM/YYYY
+        function getFormattedDateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+
+            return `${hours}:${minutes}:${seconds} - ${day}/${month}/${year}`;
+        }
+
+        // TỰ ĐỘNG ĐỒNG BỘ LẠI SỐ LƯỢNG MƯỢN TỪ DỮ LIỆU NHẬT KÝ
+        function syncBorrowedCount() {
+            items.forEach(item => {
+                item.borrowed = 0;
+            });
+
+            logs.forEach(log => {
+                if (log.status === 'Đang mượn') {
+                    const item = items.find(i => i.id === log.itemId || i.name === log.itemName);
+                    if (item) {
+                        item.borrowed += (log.qty || 1);
+                    }
+                }
+            });
+        }
+
+        // TỰ ĐỘNG LƯU VÀO LOCALSTORAGE VÀ CẬP NHẬT TIMESTAMP
+        function saveDataToLocal() {
+            lastUpdated = getFormattedDateTime();
+
+            const fullData = { 
+                lastUpdated, 
+                items, 
+                logs, 
+                notes 
+            };
+
+            localStorage.setItem('stem_app_data', JSON.stringify(fullData));
+            
+            const timeDisplay = document.getElementById('last-updated-time');
+            if (timeDisplay) timeDisplay.innerText = lastUpdated;
+
+            updateStats();
+        }
+
+        // KHỞI CHẠY TRANG WEB
         window.addEventListener('DOMContentLoaded', () => {
             const savedData = localStorage.getItem('stem_app_data');
             if (savedData) {
@@ -379,6 +436,12 @@
                     items = parsed.items || [];
                     logs = parsed.logs || [];
                     notes = parsed.notes || [];
+                    lastUpdated = parsed.lastUpdated || getFormattedDateTime();
+
+                    syncBorrowedCount();
+                    
+                    document.getElementById('last-updated-time').innerText = lastUpdated;
+
                     renderItems();
                     renderLogs();
                     renderNotes();
@@ -391,13 +454,6 @@
             }
         });
 
-        // TỰ ĐỘNG LƯU VÀO LOCALSTORAGE
-        function saveDataToLocal() {
-            const fullData = { items, logs, notes };
-            localStorage.setItem('stem_app_data', JSON.stringify(fullData));
-            updateStats();
-        }
-
         // LOAD DATA TỪ FILE DATA.JSON TRÊN GITHUB
         async function loadDataFromJSON() {
             try {
@@ -408,6 +464,11 @@
                 items = data.items || [];
                 logs = data.logs || [];
                 notes = data.notes || [];
+                lastUpdated = data.lastUpdated || getFormattedDateTime();
+
+                syncBorrowedCount();
+
+                document.getElementById('last-updated-time').innerText = lastUpdated;
 
                 saveDataToLocal();
                 renderItems();
@@ -418,9 +479,14 @@
             }
         }
 
-        // XUẤT DATA.JSON ĐẦY ĐỦ 3 MỤC
+        // XUẤT FILE DATA.JSON ĐỂ COMMIT GITHUB
         function exportJSONData() {
-            const fullData = { items, logs, notes };
+            const fullData = { 
+                lastUpdated: getFormattedDateTime(), 
+                items, 
+                logs, 
+                notes 
+            };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullData, null, 2));
             const downloadAnchor = document.createElement('a');
             downloadAnchor.setAttribute("href", dataStr);
@@ -557,7 +623,7 @@
             });
         }
 
-        // RENDER BẢNG NHẬT KÝ MƯỢN TRẢ (CÓ NÚT XÓA)
+        // RENDER BẢNG NHẬT KÝ MƯỢN TRẢ
         function renderLogs() {
             const tableBody = document.getElementById('logs-table-body');
             if(!tableBody) return;
@@ -622,12 +688,12 @@
             });
         }
 
-        // CÁC THAO TÁC KHO DỤNG CỤ
+        // THAO TÁC TRÊN KHO
         function updateQty(id, delta) {
             const item = items.find(i => i.id === id);
             if (item) {
                 if (item.total + delta < item.borrowed) {
-                    alert("Số lượng tổng không thể nhỏ hơn số lượng đang được mượn!");
+                    alert("Số lượng tổng không thể nhỏ hơn số lượng đang mượn!");
                     return;
                 }
                 item.total = Math.max(1, item.total + delta);
@@ -662,8 +728,9 @@
         }
 
         function deleteItem(itemId) {
-            if (confirm("Bạn có chắc chắn muốn xóa thiết bị này khỏi kho?")) {
+            if (confirm("Xóa dụng cụ này khỏi hệ thống?")) {
                 items = items.filter(i => i.id !== itemId);
+                syncBorrowedCount();
                 saveDataToLocal();
                 renderItems();
             }
@@ -704,7 +771,7 @@
             }
         }
 
-        // CÁC THAO TÁC MƯỢN TRẢ
+        // THAO TÁC MƯỢN TRẢ
         function openBorrowModal(itemId) {
             const item = items.find(i => i.id === itemId);
             if (!item) return;
@@ -732,8 +799,6 @@
 
             if (!item) return;
 
-            item.borrowed += qty;
-
             const newLog = {
                 id: Date.now(),
                 itemId: item.id,
@@ -750,6 +815,7 @@
             };
 
             logs.unshift(newLog);
+            syncBorrowedCount();
             saveDataToLocal();
             renderItems();
             renderLogs();
@@ -813,21 +879,12 @@
             if (!log) return;
 
             const isReturned = document.getElementById('return-toggle-status').checked;
-            const prevStatus = log.status;
 
             log.status = isReturned ? 'Đã trả đồ' : 'Đang mượn';
             log.note = document.getElementById('return-note').value;
             if(selectedReturnImgBase64) log.proofImg = selectedReturnImgBase64;
 
-            // Xử lý hoàn trả số lượng kho
-            if (prevStatus === 'Đang mượn' && isReturned) {
-                const item = items.find(i => i.id === log.itemId);
-                if (item) item.borrowed = Math.max(0, item.borrowed - log.qty);
-            } else if (prevStatus === 'Đã trả đồ' && !isReturned) {
-                const item = items.find(i => i.id === log.itemId);
-                if (item) item.borrowed += log.qty;
-            }
-
+            syncBorrowedCount();
             saveDataToLocal();
             renderItems();
             renderLogs();
@@ -835,20 +892,16 @@
         }
 
         function deleteLog(logId) {
-            if (confirm("Bạn có chắc chắn muốn xóa dòng nhật ký mượn/trả này không?")) {
-                const log = logs.find(l => l.id === logId);
-                if (log && log.status === 'Đang mượn') {
-                    const item = items.find(i => i.id === log.itemId);
-                    if (item) item.borrowed = Math.max(0, item.borrowed - log.qty);
-                }
+            if (confirm("Bạn có chắc muốn xóa dòng lịch sử mượn trả này?")) {
                 logs = logs.filter(l => l.id !== logId);
+                syncBorrowedCount();
                 saveDataToLocal();
                 renderItems();
                 renderLogs();
             }
         }
 
-        // CÁC THAO TÁC GHI CHÚ CLB
+        // THAO TÁC GHI CHÚ
         function openNoteModal() {
             document.getElementById('note-id').value = '';
             document.getElementById('note-modal-title').innerText = 'Thêm Ghi Chú Mới';
@@ -901,7 +954,7 @@
             }
         }
 
-        // HELPER MODAL
+        // TIỆN ÍCH MODAL
         function openModal(id) {
             document.getElementById(id).classList.remove('hidden');
         }
