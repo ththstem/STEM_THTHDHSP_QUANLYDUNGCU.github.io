@@ -51,7 +51,7 @@
             <div class="flex items-center gap-3">
                 <!-- LOGO CLB -->
                 <div class="w-12 h-12 rounded-xl bg-white p-1 flex items-center justify-center overflow-hidden shadow-md shrink-0">
-                    <img src="./STEM_THTHDHSP_LOGO.png" alt="STEM THTH Logo" class="w-full h-full object-contain">
+                    <img src="./STEM_THTHDHSP_LOGO.png" alt="STEM THTH Logo" class="w-full h-full object-contain" onerror="this.src='https://via.placeholder.com/150?text=STEM'">
                 </div>
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold tracking-tight text-blue-400">CLB STEM THTH – ĐHSP</h1>
@@ -72,6 +72,10 @@
                         <i class="fa-solid fa-note-sticky"></i> Ghi Chú CLB
                     </button>
                 </div>
+
+                <button onclick="exportJSONData()" title="Xuất file JSON để commit lên Github" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-lg transition">
+                    <i class="fa-solid fa-file-export"></i> Xuất data.json
+                </button>
             </div>
         </header>
 
@@ -355,7 +359,7 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC - FETCH DỮ LIỆU TỪ DATA.JSON -->
+    <!-- JAVASCRIPT LOGIC hoàn chỉnh -->
     <script>
         let items = [];
         let logs = [];
@@ -366,10 +370,36 @@
         let selectedImgBase64 = null;
         let selectedReturnImgBase64 = null;
 
+        // Khởi chạy khi load trang
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedData = localStorage.getItem('stem_app_data');
+            if (savedData) {
+                try {
+                    const parsed = JSON.parse(savedData);
+                    items = parsed.items || [];
+                    logs = parsed.logs || [];
+                    notes = parsed.notes || [];
+                    renderItems();
+                    renderLogs();
+                    renderNotes();
+                } catch (e) {
+                    loadDataFromJSON();
+                }
+            } else {
+                loadDataFromJSON();
+            }
+        });
+
+        // TỰ ĐỘNG LƯU VÀO LOCALSTORAGE
+        function saveDataToLocal() {
+            const fullData = { items, logs, notes };
+            localStorage.setItem('stem_app_data', JSON.stringify(fullData));
+        }
+
         // LOAD DATA TỪ FILE DATA.JSON TRÊN GITHUB
         async function loadDataFromJSON() {
             try {
-                const response = await fetch('./data.json?v=' + Date.now()); // tránh cache
+                const response = await fetch('./data.json?v=' + Date.now());
                 if (!response.ok) throw new Error("Không thể tải file data.json");
                 const data = await response.json();
                 
@@ -377,15 +407,47 @@
                 logs = data.logs || [];
                 notes = data.notes || [];
 
+                saveDataToLocal();
                 renderItems();
                 renderLogs();
                 renderNotes();
             } catch (error) {
                 console.error("Lỗi đọc data.json:", error);
-                alert("Không thể tải dữ liệu từ data.json! Vui lòng kiểm tra file data.json trên GitHub.");
             }
         }
 
+        // CHUYỂN TAB
+        function switchTab(tabName) {
+            currentTab = tabName;
+            ['kho', 'nhatky', 'ghichu'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                const btn = document.getElementById(`btn-${t}`);
+                btn.classList.remove('tab-active');
+                btn.classList.add('text-slate-400');
+            });
+
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`btn-${tabName}`);
+            activeBtn.classList.add('tab-active');
+            activeBtn.classList.remove('text-slate-400');
+        }
+
+        // LỌC THIẾT BỊ
+        function setFilter(filter) {
+            activeFilter = filter;
+            const buttons = document.querySelectorAll('#filter-container button');
+            buttons.forEach(btn => {
+                btn.className = "px-4 py-1.5 rounded-full text-xs font-semibold bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition";
+            });
+
+            const activeBtn = document.getElementById(`filter-${filter}`);
+            if (activeBtn) {
+                activeBtn.className = "px-4 py-1.5 rounded-full text-xs font-semibold bg-blue-600 text-white transition";
+            }
+            renderItems();
+        }
+
+        // RENDER DANH SÁCH THIẾT BỊ
         function renderItems() {
             const grid = document.getElementById('equipment-grid');
             const searchVal = document.getElementById('search-input').value.toLowerCase();
@@ -423,7 +485,7 @@
                 const cardHTML = `
                     <div class="card-bg rounded-2xl overflow-hidden flex flex-col transition hover:border-slate-700">
                         <div class="relative h-48 bg-slate-900">
-                            <img src="${item.img}" alt="${item.name}" class="w-full h-full object-cover">
+                            <img src="${item.img || 'https://via.placeholder.com/300x200?text=No+Image'}" alt="${item.name}" class="w-full h-full object-cover">
                             <label class="absolute bottom-2 right-2 bg-black/60 hover:bg-black text-xs text-white px-3 py-1 rounded-lg backdrop-blur-md transition cursor-pointer flex items-center gap-1">
                                 <i class="fa-solid fa-pen-to-square"></i> Đổi ảnh
                                 <input type="file" accept="image/*" class="hidden" onchange="changeCardImg(event, ${item.id})">
@@ -473,6 +535,7 @@
             updateStats();
         }
 
+        // RENDER BẢNG NHẬT KÝ MƯỢN TRẢ
         function renderLogs() {
             const tableBody = document.getElementById('logs-table-body');
             tableBody.innerHTML = '';
@@ -492,21 +555,16 @@
                         <td class="p-4 text-blue-400 font-semibold">${log.class}</td>
                         <td class="p-4 font-medium text-slate-200">${log.itemName}</td>
                         <td class="p-4 font-bold text-white">${log.qty}</td>
-                        <td class="p-4 text-xs text-amber-300/90 max-w-[180px] truncate" title="${log.purpose || ''}">${log.purpose || '-'}</td>
-                        <td class="p-4 text-slate-400">${log.borrowDate}</td>
-                        <td class="p-4 font-semibold text-slate-200">${log.returnDate}</td>
+                        <td class="p-4 text-xs text-amber-300/90 max-w-[180px] truncate" title="${log.purpose}">${log.purpose || '---'}</td>
+                        <td class="p-4 text-xs text-slate-400">${log.borrowDate}</td>
+                        <td class="p-4 text-xs text-slate-400">${log.returnDate}</td>
                         <td class="p-4">${statusBadge}</td>
-                        <td class="p-4 text-xs text-slate-300 max-w-[150px] truncate" title="${log.note || ''}">${log.note || '-'}</td>
+                        <td class="p-4 text-xs text-slate-300 max-w-[150px] truncate">${log.note || '---'}</td>
                         <td class="p-4">${proofHtml}</td>
                         <td class="p-4 text-center">
-                            <div class="flex items-center justify-center gap-2">
-                                <button onclick="openReturnModal(${log.id})" class="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-white rounded-xl text-xs font-semibold transition inline-flex items-center gap-1.5">
-                                    <i class="fa-solid fa-camera"></i> Trả đồ
-                                </button>
-                                <button onclick="deleteLog(${log.id})" class="p-2 bg-rose-500/10 border border-rose-500/30 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl text-xs transition">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            </div>
+                            <button onclick="openReturnModal(${log.id})" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 rounded-lg text-xs font-medium transition flex items-center gap-1 mx-auto">
+                                <i class="fa-solid fa-pen"></i> Sửa / Trả
+                            </button>
                         </td>
                     </tr>
                 `;
@@ -514,33 +572,24 @@
             });
         }
 
+        // RENDER DANH SÁCH GHI CHÚ
         function renderNotes() {
             const grid = document.getElementById('notes-grid');
             grid.innerHTML = '';
 
-            if (notes.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500">Chưa có ghi chú nào trong data.json</div>`;
-                return;
-            }
-
             notes.forEach(note => {
                 const card = `
-                    <div class="card-bg rounded-2xl p-5 border border-slate-800 hover:border-amber-500/40 transition flex flex-col justify-between space-y-4 shadow-lg relative group">
-                        <div class="space-y-2">
-                            <div class="flex justify-between items-start gap-2">
-                                <h3 class="font-bold text-base text-amber-400 line-clamp-1">${note.title}</h3>
-                                <span class="text-[10px] text-slate-500 bg-slate-900 px-2 py-1 rounded-md shrink-0">${note.date}</span>
+                    <div class="card-bg p-5 rounded-2xl space-y-3 relative group border border-slate-800 hover:border-amber-500/50 transition">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-bold text-lg text-amber-400 line-clamp-1">${note.title}</h3>
+                            <div class="flex items-center gap-2">
+                                <button onclick="openNoteModal(${note.id})" class="text-slate-400 hover:text-amber-400 text-xs transition"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteNote(${note.id})" class="text-slate-400 hover:text-rose-500 text-xs transition"><i class="fa-solid fa-trash"></i></button>
                             </div>
-                            <p class="text-sm text-slate-300 whitespace-pre-line leading-relaxed line-clamp-6">${note.content}</p>
                         </div>
-
-                        <div class="flex justify-end items-center gap-2 pt-3 border-t border-slate-800/80">
-                            <button onclick="editNote(${note.id})" class="p-2 text-slate-400 hover:text-amber-400 transition text-xs font-medium flex items-center gap-1">
-                                <i class="fa-solid fa-pen-to-square"></i> Sửa
-                            </button>
-                            <button onclick="deleteNote(${note.id})" class="p-2 text-slate-400 hover:text-rose-400 transition text-xs font-medium flex items-center gap-1">
-                                <i class="fa-solid fa-trash-can"></i> Xóa
-                            </button>
+                        <p class="text-xs text-slate-300 whitespace-pre-line leading-relaxed">${note.content}</p>
+                        <div class="pt-2 text-[10px] text-slate-500 border-t border-slate-800/80 flex justify-between">
+                            <span><i class="fa-regular fa-clock mr-1"></i>${note.date}</span>
                         </div>
                     </div>
                 `;
@@ -548,94 +597,136 @@
             });
         }
 
-        function openNoteModal(noteId = null) {
-            if (noteId) {
-                const note = notes.find(n => n.id === noteId);
-                if (note) {
-                    document.getElementById('note-id').value = note.id;
-                    document.getElementById('note-title').value = note.title;
-                    document.getElementById('note-content').value = note.content;
-                    document.getElementById('note-modal-title').innerText = "Sửa Ghi Chú";
-                }
-            } else {
-                document.getElementById('note-form').reset();
-                document.getElementById('note-id').value = '';
-                document.getElementById('note-modal-title').innerText = "Thêm Ghi Chú Mới";
-            }
-            openModal('note-modal');
-        }
-
-        function handleSaveNote(e) {
-            e.preventDefault();
-            const id = document.getElementById('note-id').value;
-            const title = document.getElementById('note-title').value;
-            const content = document.getElementById('note-content').value;
-            const today = new Date().toLocaleDateString('vi-VN');
-
-            if (id) {
-                const note = notes.find(n => n.id === parseInt(id));
-                if (note) {
-                    note.title = title;
-                    note.content = content;
-                }
-            } else {
-                notes.unshift({ id: Date.now(), title, content, date: today });
-            }
-
-            renderNotes();
-            closeModal('note-modal');
-        }
-
-        function deleteNote(id) {
-            if (confirm("Bạn có chắc chắn muốn xóa ghi chú này?")) {
-                notes = notes.filter(n => n.id !== id);
-                renderNotes();
-            }
-        }
-
-        function editNote(id) { openNoteModal(id); }
-
+        // CẬP NHẬT THỐNG KÊ
         function updateStats() {
             document.getElementById('stat-loai').innerText = items.length;
-            document.getElementById('stat-tong').innerText = items.reduce((a, b) => a + b.total, 0);
-            document.getElementById('stat-muon').innerText = items.reduce((a, b) => a + b.borrowed, 0);
+            
+            const totalBorrowed = items.reduce((acc, curr) => acc + (curr.borrowed || 0), 0);
+            document.getElementById('stat-muon').innerText = totalBorrowed;
+
+            const totalQty = items.reduce((acc, curr) => acc + (curr.total || 0), 0);
+            document.getElementById('stat-tong').innerText = totalQty;
         }
 
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        // CÁC MỞ / ĐÓNG MODAL
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
 
-        function setFilter(filter) {
-            activeFilter = filter;
-            document.querySelectorAll('#filter-container button').forEach(btn => {
-                btn.className = "px-4 py-1.5 rounded-full text-xs font-semibold bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition";
-            });
-            document.getElementById(`filter-${filter}`).className = "px-4 py-1.5 rounded-full text-xs font-semibold bg-blue-600 text-white transition";
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // PREVIEW ẢNH KHI THÊM THIẾT BỊ
+        function previewImage(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    selectedImgBase64 = evt.target.result;
+                    document.getElementById('file-label-text').innerText = file.name;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // THÊM THIẾT BỊ MỚI
+        function handleAddItem(e) {
+            e.preventDefault();
+            const name = document.getElementById('item-name').value;
+            const total = parseInt(document.getElementById('item-qty').value);
+            const status = document.getElementById('item-status').value;
+
+            const newItem = {
+                id: Date.now(),
+                name,
+                total,
+                borrowed: 0,
+                status,
+                img: selectedImgBase64 || 'https://via.placeholder.com/300x200?text=STEM+Tool'
+            };
+
+            items.push(newItem);
+            saveDataToLocal();
             renderItems();
+
+            document.getElementById('add-form').reset();
+            selectedImgBase64 = null;
+            document.getElementById('file-label-text').innerText = 'Chọn tệp ảnh từ máy...';
+            closeModal('add-modal');
         }
 
+        // ĐỔI ẢNH THIẾT BỊ
+        function changeCardImg(e, itemId) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const item = items.find(i => i.id === itemId);
+                    if (item) {
+                        item.img = evt.target.result;
+                        saveDataToLocal();
+                        renderItems();
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // TĂNG/GIẢM SỐ LƯỢNG THIẾT BỊ GỐC
+        function updateQty(itemId, delta) {
+            const item = items.find(i => i.id === itemId);
+            if (item) {
+                if (item.total + delta >= item.borrowed && item.total + delta >= 1) {
+                    item.total += delta;
+                    saveDataToLocal();
+                    renderItems();
+                } else {
+                    alert("Tổng số lượng không thể nhỏ hơn số lượng đang được mượn!");
+                }
+            }
+        }
+
+        // THAY ĐỔI TRẠNG THÁI THIẾT BỊ
+        function changeStatus(itemId, newStatus) {
+            const item = items.find(i => i.id === itemId);
+            if (item) {
+                item.status = newStatus;
+                saveDataToLocal();
+                renderItems();
+            }
+        }
+
+        // XÓA THIẾT BỊ
+        function deleteItem(itemId) {
+            if (confirm("Bạn có chắc chắn muốn xóa dụng cụ này khỏi kho?")) {
+                items = items.filter(i => i.id !== itemId);
+                saveDataToLocal();
+                renderItems();
+            }
+        }
+
+        // MỞ MODAL MƯỢN ĐỒ
         function openBorrowModal(itemId) {
             const item = items.find(i => i.id === itemId);
             if (!item) return;
 
-            const maxAvailable = item.total - item.borrowed;
+            const maxBorrow = item.total - item.borrowed;
             document.getElementById('borrow-item-id').value = item.id;
-            document.getElementById('borrow-item-title').innerText = `Mượn: ${item.name} (Tối đa mượn: ${maxAvailable})`;
-            document.getElementById('borrow-max-label').innerText = `Số lượng mượn (Tối đa: ${maxAvailable})`;
-            
+            document.getElementById('borrow-item-title').innerText = `Mượn: ${item.name} (Sẵn có: ${maxBorrow})`;
+            document.getElementById('borrow-max-label').innerText = `Số lượng mượn (Tối đa: ${maxBorrow})`;
+
             const qtyInput = document.getElementById('borrow-qty');
-            qtyInput.max = maxAvailable;
+            qtyInput.max = maxBorrow;
             qtyInput.value = 1;
 
-            document.getElementById('borrow-purpose').value = '';
-
             const today = new Date().toISOString().split('T')[0];
-            const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
             document.getElementById('borrow-date').value = today;
-            document.getElementById('borrow-return-date').value = nextWeek;
-
+            
             openModal('borrow-modal');
         }
 
+        // XỬ LÝ ĐĂNG KÝ MƯỢN
         function handleBorrowSubmit(e) {
             e.preventDefault();
             const itemId = parseInt(document.getElementById('borrow-item-id').value);
@@ -647,37 +738,61 @@
             const returnDate = document.getElementById('borrow-return-date').value;
 
             const item = items.find(i => i.id === itemId);
-            if (item) {
-                item.borrowed += qty;
-                logs.unshift({ id: Date.now(), itemId: item.id, name, class: className, itemName: item.name, qty, purpose, borrowDate, returnDate, status: "Đang mượn", note: "", proofImg: null });
-                renderItems();
-                renderLogs();
-                closeModal('borrow-modal');
-                document.getElementById('borrow-form').reset();
+            if (!item) return;
+
+            const available = item.total - item.borrowed;
+            if (qty > available) {
+                alert("Số lượng mượn vượt quá số lượng sẵn có trong kho!");
+                return;
             }
+
+            item.borrowed += qty;
+
+            const newLog = {
+                id: Date.now(),
+                itemId,
+                itemName: item.name,
+                name,
+                class: className,
+                qty,
+                purpose,
+                borrowDate,
+                returnDate,
+                status: 'Đang mượn',
+                note: '',
+                proofImg: null
+            };
+
+            logs.unshift(newLog);
+            saveDataToLocal();
+            renderItems();
+            renderLogs();
+
+            document.getElementById('borrow-form').reset();
+            closeModal('borrow-modal');
         }
 
+        // MỞ MODAL TRẢ ĐỒ
         function openReturnModal(logId) {
             const log = logs.find(l => l.id === logId);
             if (!log) return;
 
             document.getElementById('return-log-id').value = log.id;
-            document.getElementById('return-item-info').innerText = `Người mượn: ${log.name} (${log.class}) - Mượn: ${log.itemName} (x${log.qty})`;
-            
-            const toggle = document.getElementById('return-toggle-status');
-            toggle.checked = (log.status === 'Đã trả đồ');
-            toggleStatusText(toggle);
-
+            document.getElementById('return-item-info').innerText = `Người mượn: ${log.name} - ${log.itemName} (${log.qty} cái)`;
             document.getElementById('return-note').value = log.note || '';
 
+            const checkbox = document.getElementById('return-toggle-status');
+            checkbox.checked = (log.status === 'Đã trả đồ');
+            toggleStatusText(checkbox);
+
+            const previewBox = document.getElementById('return-img-preview-box');
+            const previewImg = document.getElementById('return-img-preview');
             if (log.proofImg) {
-                document.getElementById('return-img-preview').src = log.proofImg;
-                document.getElementById('return-img-preview-box').classList.remove('hidden');
-                document.getElementById('return-file-label').innerText = "Đổi ảnh minh chứng...";
+                previewImg.src = log.proofImg;
+                previewBox.classList.remove('hidden');
                 selectedReturnImgBase64 = log.proofImg;
             } else {
-                document.getElementById('return-img-preview-box').classList.add('hidden');
-                document.getElementById('return-file-label').innerText = "Chọn hoặc chụp ảnh...";
+                previewBox.classList.add('hidden');
                 selectedReturnImgBase64 = null;
             }
 
@@ -686,8 +801,13 @@
 
         function toggleStatusText(checkbox) {
             const label = document.getElementById('toggle-label');
-            label.innerText = checkbox.checked ? "Đã trả đồ" : "Đang mượn";
-            label.className = checkbox.checked ? "ml-2.5 text-xs font-bold text-emerald-400" : "ml-2.5 text-xs font-bold text-amber-400";
+            if (checkbox.checked) {
+                label.innerText = 'Đã trả đồ';
+                label.className = 'ml-2.5 text-xs font-bold text-emerald-400';
+            } else {
+                label.innerText = 'Đang mượn';
+                label.className = 'ml-2.5 text-xs font-bold text-amber-400';
+            }
         }
 
         function previewReturnImage(e) {
@@ -698,12 +818,12 @@
                     selectedReturnImgBase64 = evt.target.result;
                     document.getElementById('return-img-preview').src = selectedReturnImgBase64;
                     document.getElementById('return-img-preview-box').classList.remove('hidden');
-                    document.getElementById('return-file-label').innerText = file.name;
                 };
                 reader.readAsDataURL(file);
             }
         }
 
+        // LƯU CẬP NHẬT TRẢ ĐỒ
         function handleReturnSubmit(e) {
             e.preventDefault();
             const logId = parseInt(document.getElementById('return-log-id').value);
@@ -711,114 +831,104 @@
             const note = document.getElementById('return-note').value;
 
             const log = logs.find(l => l.id === logId);
-            if (log) {
-                const oldStatus = log.status;
-                log.status = isReturned ? 'Đã trả đồ' : 'Đang mượn';
-                log.note = note;
-                if (selectedReturnImgBase64) log.proofImg = selectedReturnImgBase64;
+            if (!log) return;
 
-                const item = items.find(i => i.id === log.itemId);
-                if (item) {
-                    if (oldStatus === 'Đang mượn' && isReturned) item.borrowed = Math.max(0, item.borrowed - log.qty);
-                    else if (oldStatus === 'Đã trả đồ' && !isReturned) item.borrowed += log.qty;
+            const previousStatus = log.status;
+            log.status = isReturned ? 'Đã trả đồ' : 'Đang mượn';
+            log.note = note;
+            if (selectedReturnImgBase64) {
+                log.proofImg = selectedReturnImgBase64;
+            }
+
+            // Hoàn trả số lượng kho nếu trạng thái đổi thành "Đã trả đồ"
+            const item = items.find(i => i.id === log.itemId);
+            if (item) {
+                if (previousStatus === 'Đang mượn' && isReturned) {
+                    item.borrowed = Math.max(0, item.borrowed - log.qty);
+                } else if (previousStatus === 'Đã trả đồ' && !isReturned) {
+                    item.borrowed += log.qty;
                 }
-
-                renderItems();
-                renderLogs();
-                closeModal('return-modal');
             }
-        }
 
-        function deleteLog(logId) {
-            const log = logs.find(l => l.id === logId);
-            if (log && confirm(`Bạn có chắc muốn xóa lượt mượn của "${log.name}"?`)) {
-                if (log.status === 'Đang mượn') {
-                    const item = items.find(i => i.id === log.itemId);
-                    if (item) item.borrowed = Math.max(0, item.borrowed - log.qty);
-                }
-                logs = logs.filter(l => l.id !== logId);
-                renderItems();
-                renderLogs();
-            }
-        }
-
-        function previewImage(e) {
-            const file = e.target.files[0];
-            if (file) {
-                document.getElementById('file-label-text').innerText = file.name;
-                const reader = new FileReader();
-                reader.onload = function(evt) { selectedImgBase64 = evt.target.result; };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function handleAddItem(e) {
-            e.preventDefault();
-            const name = document.getElementById('item-name').value;
-            const total = parseInt(document.getElementById('item-qty').value);
-            const status = document.getElementById('item-status').value;
-            const img = selectedImgBase64 || "https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=500";
-
-            items.unshift({ id: Date.now(), name, status, total, borrowed: 0, img });
+            saveDataToLocal();
             renderItems();
-            closeModal('add-modal');
-            document.getElementById('add-form').reset();
-            selectedImgBase64 = null;
+            renderLogs();
+            closeModal('return-modal');
         }
 
-        function changeCardImg(e, itemId) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    const item = items.find(i => i.id === itemId);
-                    if(item) { 
-                        item.img = evt.target.result; 
-                        renderItems(); 
-                    }
+        // QUẢN LÝ GHI CHÚ
+        function openNoteModal(noteId = null) {
+            const form = document.getElementById('note-form');
+            form.reset();
+
+            if (noteId) {
+                const note = notes.find(n => n.id === noteId);
+                if (note) {
+                    document.getElementById('note-id').value = note.id;
+                    document.getElementById('note-title').value = note.title;
+                    document.getElementById('note-content').value = note.content;
+                    document.getElementById('note-modal-title').innerText = 'Chỉnh Sửa Ghi Chú';
+                }
+            } else {
+                document.getElementById('note-id').value = '';
+                document.getElementById('note-modal-title').innerText = 'Thêm Ghi Chú Mới';
+            }
+
+            openModal('note-modal');
+        }
+
+        function handleSaveNote(e) {
+            e.preventDefault();
+            const id = document.getElementById('note-id').value;
+            const title = document.getElementById('note-title').value;
+            const content = document.getElementById('note-content').value;
+            const dateStr = new Date().toLocaleDateString('vi-VN');
+
+            if (id) {
+                const note = notes.find(n => n.id === parseInt(id));
+                if (note) {
+                    note.title = title;
+                    note.content = content;
+                    note.date = dateStr;
+                }
+            } else {
+                const newNote = {
+                    id: Date.now(),
+                    title,
+                    content,
+                    date: dateStr
                 };
-                reader.readAsDataURL(file);
+                notes.unshift(newNote);
+            }
+
+            saveDataToLocal();
+            renderNotes();
+            closeModal('note-modal');
+        }
+
+        function deleteNote(noteId) {
+            if (confirm("Bạn có chắc muốn xóa ghi chú này?")) {
+                notes = notes.filter(n => n.id !== noteId);
+                saveDataToLocal();
+                renderNotes();
             }
         }
 
-        function updateQty(id, delta) {
-            const item = items.find(i => i.id === id);
-            if (item && item.total + delta >= item.borrowed && item.total + delta >= 1) {
-                item.total += delta;
-                renderItems();
-            }
+        // XUẤT FILE DATA.JSON ĐỂ CẬP NHẬT LÊN GITHUB
+        function exportJSONData() {
+            const exportData = { items, logs, notes };
+            const jsonStr = JSON.stringify(exportData, null, 4);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
-
-        function changeStatus(id, newStatus) {
-            const item = items.find(i => i.id === id);
-            if (item) { 
-                item.status = newStatus; 
-                renderItems(); 
-            }
-        }
-
-        function deleteItem(id) {
-            if(confirm("Bạn có chắc muốn xóa thiết bị này khỏi kho?")) {
-                items = items.filter(i => i.id !== id);
-                renderItems();
-            }
-        }
-
-        function switchTab(tab) {
-            currentTab = tab;
-
-            document.getElementById('tab-kho').classList.toggle('hidden', tab !== 'kho');
-            document.getElementById('tab-nhatky').classList.toggle('hidden', tab !== 'nhatky');
-            document.getElementById('tab-ghichu').classList.toggle('hidden', tab !== 'ghichu');
-
-            document.getElementById('btn-kho').className = tab === 'kho' ? "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 tab-active flex items-center gap-2" : "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-slate-400 hover:text-white flex items-center gap-2";
-            document.getElementById('btn-nhatky').className = tab === 'nhatky' ? "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 tab-active flex items-center gap-2" : "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-slate-400 hover:text-white flex items-center gap-2";
-            document.getElementById('btn-ghichu').className = tab === 'ghichu' ? "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 tab-active flex items-center gap-2" : "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-slate-400 hover:text-white flex items-center gap-2";
-        }
-
-        // TỰ ĐỘNG CHẠY KHI TẢI TRANG
-        switchTab('kho');
-        loadDataFromJSON();
     </script>
 </body>
 </html>
