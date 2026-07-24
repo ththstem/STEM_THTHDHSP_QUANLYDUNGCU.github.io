@@ -1,0 +1,66 @@
+{
+  "items": [
+    { 
+      "id": 1, 
+      "name": "Bộ Mạch Arduino Uno R3", 
+      "status": "Cho mượn", 
+      "total": 4, 
+      "borrowed": 1, 
+      "img": "https://images.unsplash.com/photo-1553406830-ef2513450d76?w=500" 
+    },
+    { 
+      "id": 2, 
+      "name": "Mỏ Hàn Nhiệt Cầm Tay", 
+      "status": "Cố định", 
+      "total": 5, 
+      "borrowed": 0, 
+      "img": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=500" 
+    },
+    { 
+      "id": 3, 
+      "name": "Máy in 3D", 
+      "status": "Cố định", 
+      "total": 1, 
+      "borrowed": 0, 
+      "img": "https://images.unsplash.com/photo-1631557550607-16017fefaa85?w=500" 
+    },
+    { 
+      "id": 4, 
+      "name": "Kính thiên văn", 
+      "status": "Cho mượn", 
+      "total": 1, 
+      "borrowed": 0, 
+      "img": "https://images.unsplash.com/photo-1516339901601-2e1b62dc0c45?w=500" 
+    }
+  ],
+  "logs": [
+    { 
+      "id": 101, 
+      "itemId": 1, 
+      "name": "Hà Phương", 
+      "class": "11.3", 
+      "itemName": "Bộ Mạch Arduino Uno R3", 
+      "qty": 1, 
+      "purpose": "Thực hành dự án Robot dò đường", 
+      "borrowDate": "2026-07-24", 
+      "returnDate": "2026-07-31", 
+      "status": "Đang mượn", 
+      "note": "", 
+      "proofImg": null 
+    }
+  ],
+  "notes": [
+    { 
+      "id": 1, 
+      "title": "Lịch sinh hoạt CLB hàng tuần", 
+      "content": "Thời gian: 15h00 Chủ Nhật hàng tuần tại Phòng Lab STEM.\nNội dung: Hướng dẫn thành viên mới lập trình C++ cơ bản.", 
+      "date": "24/07/2026" 
+    },
+    { 
+      "id": 2, 
+      "title": "Danh sách mua bổ sung thiết bị", 
+      "content": "- 10 Cảm biến siêu âm HC-SR04\n- 20 Cuộn dây thiếc hàn\n- 5 Nguồn 12V-2A", 
+      "date": "22/07/2026" 
+    }
+  ]
+}
