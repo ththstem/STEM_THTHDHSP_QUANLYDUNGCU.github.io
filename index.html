@@ -205,7 +205,6 @@
 
     </div>
 
-    <!-- MODALS -->
     <!-- MODAL ĐĂNG NHẬP ADMIN -->
     <div id="admin-login-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="card-bg w-full max-w-sm rounded-2xl p-6 space-y-4 border border-amber-500/40 shadow-2xl relative">
@@ -231,22 +230,19 @@
         </div>
     </div>
 
-    <!-- MODAL 1: THÊM THIẾT BỊ MỚI -->
+    <!-- MODALS KHÁC (GIỮ NGUYÊN) -->
     <div id="add-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="card-bg w-full max-w-md rounded-2xl p-6 space-y-5 border border-slate-700 shadow-2xl relative">
             <h3 class="text-xl font-bold text-white">Thêm Thiết Bị STEM Mới</h3>
-            
             <form id="add-form" onsubmit="handleAddItem(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs text-slate-400 mb-1.5 font-medium">Tên thiết bị / dụng cụ</label>
                     <input type="text" id="item-name" required placeholder="Ví dụ: Máy in 3D Creality..." class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-200">
                 </div>
-
                 <div>
                     <label class="block text-xs text-slate-400 mb-1.5 font-medium">Tổng (Tối thiểu 1)</label>
                     <input type="number" id="item-qty" min="1" value="1" required class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-200">
                 </div>
-
                 <div>
                     <label class="block text-xs text-slate-400 mb-1.5 font-medium">Trạng thái ban đầu</label>
                     <select id="item-status" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-200">
@@ -255,7 +251,6 @@
                         <option value="Đang hư / Cần sửa chữa">Đang hư / Cần sửa chữa</option>
                     </select>
                 </div>
-
                 <div>
                     <label class="block text-xs text-slate-400 mb-1.5 font-medium">Tải ảnh dụng cụ</label>
                     <div class="relative">
@@ -266,7 +261,6 @@
                         </label>
                     </div>
                 </div>
-
                 <div class="flex gap-3 pt-2">
                     <button type="button" onclick="closeModal('add-modal')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-2.5 rounded-xl text-sm transition">Hủy</button>
                     <button type="submit" class="flex-1 custom-blue text-white font-medium py-2.5 rounded-xl text-sm shadow-lg shadow-cyan-500/20 hover:scale-[1.02] transition">Thêm Vào Kho</button>
@@ -275,47 +269,38 @@
         </div>
     </div>
 
-    <!-- MODAL 2: ĐĂNG KÝ MƯỢN DỤNG CỤ -->
     <div id="borrow-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="card-bg w-full max-w-md rounded-2xl p-6 space-y-4 border border-slate-700 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <div>
                 <h3 class="text-xl font-bold text-white mb-1">Đăng Ký Mượn Dụng Cụ</h3>
                 <p id="borrow-item-title" class="text-xs font-semibold text-cyan-400">Mượn: ... (Tối đa mượn: 0)</p>
             </div>
-            
             <form id="borrow-form" onsubmit="handleBorrowSubmit(event)" class="space-y-3.5">
                 <input type="hidden" id="borrow-item-id">
-                
                 <div>
                     <label class="block text-xs text-slate-400 mb-1 font-medium">Họ và tên</label>
                     <input type="text" id="borrow-name" required placeholder="Nhập Họ và tên..." class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-cyan-500 text-slate-200">
                 </div>
-
                 <div>
                     <label class="block text-xs text-slate-400 mb-1 font-medium">Lớp</label>
                     <input type="text" id="borrow-class" required placeholder="Vd: 10.1, 11A2..." class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-cyan-500 text-slate-200">
                 </div>
-
                 <div>
                     <label id="borrow-max-label" class="block text-xs text-slate-400 mb-1 font-medium">Số lượng mượn (Tối đa: 0)</label>
                     <input type="number" id="borrow-qty" min="1" value="1" required class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-cyan-500 text-slate-200">
                 </div>
-
                 <div>
                     <label class="block text-xs text-slate-400 mb-1 font-medium">Mục đích mượn</label>
-                    <textarea id="borrow-purpose" rows="2" placeholder="Vd: Làm dự án xe dò đường, Thực hành bài Vật Lý lớp..." class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-cyan-500 text-slate-200 resize-none"></textarea>
+                    <textarea id="borrow-purpose" rows="2" placeholder="Vd: Làm dự án xe dò đường..." class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-cyan-500 text-slate-200 resize-none"></textarea>
                 </div>
-
                 <div>
                     <label class="block text-xs text-slate-400 mb-1 font-medium">Ngày mượn (Hôm nay)</label>
                     <input type="date" id="borrow-date" required class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-cyan-500 text-slate-200">
                 </div>
-
                 <div>
                     <label class="block text-xs text-slate-400 mb-1 font-medium">Ngày trả (Dự kiến)</label>
                     <input type="date" id="borrow-return-date" required class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-cyan-500 text-slate-200">
                 </div>
-
                 <div class="flex gap-3 pt-2">
                     <button type="button" onclick="closeModal('borrow-modal')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-2.5 rounded-xl text-sm transition">Hủy</button>
                     <button type="submit" class="flex-1 custom-blue text-white font-medium py-2.5 rounded-xl text-sm shadow-lg shadow-cyan-500/20 hover:scale-[1.02] transition">Xác Nhận Mượn</button>
@@ -324,17 +309,14 @@
         </div>
     </div>
 
-    <!-- MODAL 3: TRẢ ĐỒ & MINH CHỨNG -->
     <div id="return-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="card-bg w-full max-w-md rounded-2xl p-6 space-y-5 border border-slate-700 shadow-2xl relative">
             <div>
                 <h3 class="text-xl font-bold text-white mb-1">Cập Nhật Trả Đồ</h3>
                 <p id="return-item-info" class="text-xs font-semibold text-cyan-400">Người mượn: ...</p>
             </div>
-            
             <form id="return-form" onsubmit="handleReturnSubmit(event)" class="space-y-4">
                 <input type="hidden" id="return-log-id">
-
                 <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 flex items-center justify-between">
                     <span class="text-xs font-medium text-slate-300">Trạng thái trả đồ:</span>
                     <label class="relative inline-flex items-center cursor-pointer">
@@ -343,7 +325,6 @@
                         <span id="toggle-label" class="ml-2.5 text-xs font-bold text-amber-400">Đang mượn</span>
                     </label>
                 </div>
-
                 <div>
                     <label class="block text-xs text-slate-400 mb-1.5 font-medium">Tải ảnh minh chứng khi trả đồ</label>
                     <div class="relative">
@@ -359,12 +340,10 @@
                         </label>
                     </div>
                 </div>
-
                 <div>
                     <label class="block text-xs text-slate-400 mb-1.5 font-medium">Ghi chú tình trạng đồ</label>
-                    <textarea id="return-note" rows="2" placeholder="Ví dụ: Trả đủ dây cáp, mạch tốt..." class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 text-slate-200 resize-none"></textarea>
+                    <textarea id="return-note" rows="2" placeholder="Ví dụ: Trả đủ dây cáp..." class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 text-slate-200 resize-none"></textarea>
                 </div>
-
                 <div class="flex gap-3 pt-2">
                     <button type="button" onclick="closeModal('return-modal')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-2.5 rounded-xl text-sm transition">Hủy</button>
                     <button type="submit" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-2.5 rounded-xl text-sm shadow-lg shadow-emerald-500/20 hover:scale-[1.02] transition">Lưu Thay Đổi</button>
@@ -373,24 +352,19 @@
         </div>
     </div>
 
-    <!-- MODAL 4: THÊM / SỬA GHI CHÚ -->
     <div id="note-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="card-bg w-full max-w-lg rounded-2xl p-6 space-y-5 border border-slate-700 shadow-2xl relative">
             <h3 id="note-modal-title" class="text-xl font-bold text-amber-400">Thêm Ghi Chú Mới</h3>
-            
             <form id="note-form" onsubmit="handleSaveNote(event)" class="space-y-4">
                 <input type="hidden" id="note-id">
-                
                 <div>
                     <label class="block text-xs text-slate-400 mb-1.5 font-medium">Tiêu đề ghi chú</label>
-                    <input type="text" id="note-title" required placeholder="Ví dụ: Lịch họp ban chủ nhiệm, Chuẩn bị cuộc thi STEM..." class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-amber-500 text-slate-200">
+                    <input type="text" id="note-title" required placeholder="Ví dụ: Lịch họp ban chủ nhiệm..." class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-amber-500 text-slate-200">
                 </div>
-
                 <div>
                     <label class="block text-xs text-slate-400 mb-1.5 font-medium">Nội dung ghi chú</label>
-                    <textarea id="note-content" rows="6" required placeholder="Nhập nội dung chi tiết tại đây..." class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-amber-500 text-slate-200 resize-none"></textarea>
+                    <textarea id="note-content" rows="6" required placeholder="Nhập nội dung chi tiết..." class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-amber-500 text-slate-200 resize-none"></textarea>
                 </div>
-
                 <div class="flex gap-3 pt-2">
                     <button type="button" onclick="closeModal('note-modal')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-2.5 rounded-xl text-sm transition">Hủy</button>
                     <button type="submit" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-medium py-2.5 rounded-xl text-sm shadow-lg shadow-amber-500/20 hover:scale-[1.02] transition">Lưu Ghi Chú</button>
@@ -401,60 +375,60 @@
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
-        
+        // MẬT KHẨU CHÍNH XÁC (Trực tiếp & SHA-256 fallback)
+        const ADMIN_PIN_EXACT = "ththstem.admin@03092020";
         const ADMIN_PIN_HASH = "c6f79918cdb313adf1017aece79c61f17fb7ce934ed56a3deb0e7d1d4f1f502a";
+        
         let isAdmin = false;
-
         let items = [];
         let logs = [];
         let notes = [];
         let lastUpdated = '';
         let currentTab = 'kho';
-
         let activeFilter = 'all';
         let selectedImgBase64 = null;
         let selectedReturnImgBase64 = null;
 
-        // HÀM HASH BẢO MẬT SHA-256
+        // HAM HASH SHA-256
         async function hashPIN(pin) {
             const encoder = new TextEncoder();
             const data = encoder.encode(pin);
             const hashBuffer = await crypto.subtle.digest('SHA-256', data);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toLowerCase();
         }
 
-        // XỬ LÝ ĐĂNG NHẬP / ĐĂNG XUẤT ADMIN
         function toggleAdminLogin() {
             if (isAdmin) {
                 isAdmin = false;
                 updateAdminUI();
                 alert("Đã đăng xuất khỏi chế độ Admin!");
-                if (currentTab === 'ghichu') {
-                    switchTab('kho');
-                }
+                if (currentTab === 'ghichu') switchTab('kho');
             } else {
                 document.getElementById('admin-pin-input').value = '';
                 openModal('admin-login-modal');
             }
         }
 
+        // XỬ LÝ ĐĂNG NHẬP ADMIN BẰNG CẢ 2 PHƯƠNG PHÁP (TỰ ĐỘNG TRIM KHOẢNG TRẮNG)
         async function handleAdminLogin(e) {
             e.preventDefault();
-            const pinInput = document.getElementById('admin-pin-input').value.trim();
-            const inputHash = await hashPIN(pinInput);
+            const rawInput = document.getElementById('admin-pin-input').value;
+            const cleanInput = rawInput.trim(); // Loại bỏ khoảng trắng thừa ở 2 đầu
 
-            if (inputHash === ADMIN_PIN_HASH) {
+            const inputHash = await hashPIN(cleanInput);
+
+            // Kiểm tra khớp mật khẩu trực tiếp HOẶC khớp SHA-256
+            if (cleanInput === ADMIN_PIN_EXACT || inputHash === ADMIN_PIN_HASH) {
                 isAdmin = true;
                 closeModal('admin-login-modal');
                 updateAdminUI();
                 alert("Đăng nhập Admin thành công!");
             } else {
-                alert("Mã PIN không chính xác. Vui lòng thử lại!");
+                alert("Mã PIN không chính xác. Vui lòng kiểm tra lại!");
             }
         }
 
-        // CẬP NHẬT GIAO DIỆN THEO QUYỀN ADMIN
         function updateAdminUI() {
             const btnAuthText = document.getElementById('admin-auth-text');
             const btnAddItem = document.getElementById('btn-add-item');
@@ -477,7 +451,6 @@
             renderLogs();
         }
 
-        // HÀM ĐỊNH DẠNG THỜI GIAN REALTIME: HH:mm:ss - DD/MM/YYYY
         function getFormattedDateTime() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
@@ -486,46 +459,28 @@
             const day = String(now.getDate()).padStart(2, '0');
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const year = now.getFullYear();
-
             return `${hours}:${minutes}:${seconds} - ${day}/${month}/${year}`;
         }
 
-        // TỰ ĐỘNG ĐỒNG BỘ LẠI SỐ LƯỢNG MƯỢN TỪ DỮ LIỆU NHẬT KÝ
         function syncBorrowedCount() {
-            items.forEach(item => {
-                item.borrowed = 0;
-            });
-
+            items.forEach(item => item.borrowed = 0);
             logs.forEach(log => {
                 if (log.status === 'Đang mượn') {
                     const item = items.find(i => i.id === log.itemId || i.name === log.itemName);
-                    if (item) {
-                        item.borrowed += (log.qty || 1);
-                    }
+                    if (item) item.borrowed += (log.qty || 1);
                 }
             });
         }
 
-        // TỰ ĐỘNG LƯU VÀO LOCALSTORAGE VÀ CẬP NHẬT TIMESTAMP
         function saveDataToLocal() {
             lastUpdated = getFormattedDateTime();
-
-            const fullData = { 
-                lastUpdated, 
-                items, 
-                logs, 
-                notes 
-            };
-
+            const fullData = { lastUpdated, items, logs, notes };
             localStorage.setItem('stem_app_data', JSON.stringify(fullData));
-            
             const timeDisplay = document.getElementById('last-updated-time');
             if (timeDisplay) timeDisplay.innerText = lastUpdated;
-
             updateStats();
         }
 
-        // KHỞI CHẠY TRANG WEB
         window.addEventListener('DOMContentLoaded', () => {
             const savedData = localStorage.getItem('stem_app_data');
             if (savedData) {
@@ -535,11 +490,8 @@
                     logs = parsed.logs || [];
                     notes = parsed.notes || [];
                     lastUpdated = parsed.lastUpdated || getFormattedDateTime();
-
                     syncBorrowedCount();
-                    
                     document.getElementById('last-updated-time').innerText = lastUpdated;
-
                     updateAdminUI();
                     renderNotes();
                     updateStats();
@@ -551,22 +503,17 @@
             }
         });
 
-        // LOAD DATA TỪ FILE DATA.JSON TRÊN GITHUB
         async function loadDataFromJSON() {
             try {
                 const response = await fetch('./data.json?v=' + Date.now());
                 if (!response.ok) throw new Error("Không thể tải file data.json");
                 const data = await response.json();
-                
                 items = data.items || [];
                 logs = data.logs || [];
                 notes = data.notes || [];
                 lastUpdated = data.lastUpdated || getFormattedDateTime();
-
                 syncBorrowedCount();
-
                 document.getElementById('last-updated-time').innerText = lastUpdated;
-
                 saveDataToLocal();
                 updateAdminUI();
                 renderNotes();
@@ -575,14 +522,8 @@
             }
         }
 
-        // XUẤT FILE DATA.JSON ĐỂ COMMIT GITHUB
         function exportJSONData() {
-            const fullData = { 
-                lastUpdated: getFormattedDateTime(), 
-                items, 
-                logs, 
-                notes 
-            };
+            const fullData = { lastUpdated: getFormattedDateTime(), items, logs, notes };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullData, null, 2));
             const downloadAnchor = document.createElement('a');
             downloadAnchor.setAttribute("href", dataStr);
@@ -592,7 +533,6 @@
             downloadAnchor.remove();
         }
 
-        // THỐNG KÊ CHI TIẾT
         function updateStats() {
             document.getElementById('stat-loai').innerText = items.length;
             const totalBorrowed = items.reduce((acc, item) => acc + (item.borrowed || 0), 0);
@@ -601,7 +541,6 @@
             document.getElementById('stat-tong').innerText = totalDevices;
         }
 
-        // CHUYỂN TAB - PHÂN QUYỀN VỚI TAB GHI CHÚ
         function switchTab(tabName) {
             if (tabName === 'ghichu' && !isAdmin) {
                 alert("Chỉ Ban Chủ Nhiệm (Admin) mới có quyền truy cập vào Sổ Ghi Chú CLB!");
@@ -624,22 +563,17 @@
             activeBtn.classList.remove('text-slate-400');
         }
 
-        // LỌC THIẾT BỊ
         function setFilter(filter) {
             activeFilter = filter;
             const buttons = document.querySelectorAll('#filter-container button');
             buttons.forEach(btn => {
                 btn.className = "px-4 py-1.5 rounded-full text-xs font-semibold bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition";
             });
-
             const activeBtn = document.getElementById(`filter-${filter}`);
-            if (activeBtn) {
-                activeBtn.className = "px-4 py-1.5 rounded-full text-xs font-semibold bg-blue-600 text-white transition";
-            }
+            if (activeBtn) activeBtn.className = "px-4 py-1.5 rounded-full text-xs font-semibold bg-blue-600 text-white transition";
             renderItems();
         }
 
-        // RENDER DANH SÁCH THIẾT BỊ
         function renderItems() {
             const grid = document.getElementById('equipment-grid');
             const searchVal = (document.getElementById('search-input')?.value || '').toLowerCase();
@@ -648,7 +582,6 @@
             const filteredItems = items.filter(item => {
                 const matchSearch = item.name.toLowerCase().includes(searchVal);
                 const available = item.total - item.borrowed;
-
                 if (!matchSearch) return false;
                 if (activeFilter === 'available') return item.status === 'Cho mượn' && available > 0;
                 if (activeFilter === 'out') return item.status === 'Cho mượn' && available === 0;
@@ -700,7 +633,7 @@
                         <option value="Đang hư / Cần sửa chữa" ${item.status === 'Đang hư / Cần sửa chữa' ? 'selected' : ''}>Trạng thái: Đang sửa chữa</option>
                        </select>` : '';
 
-                const cardHTML = `
+                grid.innerHTML += `
                     <div class="card-bg rounded-2xl overflow-hidden flex flex-col transition hover:border-slate-700 relative group">
                         <div class="relative h-48 bg-slate-900">
                             <img src="${item.img || 'https://via.placeholder.com/300x200?text=STEM'}" alt="${item.name}" class="w-full h-full object-cover">
@@ -735,11 +668,9 @@
                             </div>
                         </div>
                     </div>`;
-                grid.innerHTML += cardHTML;
             });
         }
 
-        // RENDER BẢNG NHẬT KÝ MƯỢN TRẢ
         function renderLogs() {
             const tableBody = document.getElementById('logs-table-body');
             if(!tableBody) return;
@@ -789,7 +720,6 @@
             });
         }
 
-        // RENDER GHI CHÚ CLB
         function renderNotes() {
             const grid = document.getElementById('notes-grid');
             if(!grid) return;
@@ -813,7 +743,6 @@
             });
         }
 
-        // THAO TÁC TRÊN KHO
         function updateQty(id, delta) {
             if (!isAdmin) return;
             const item = items.find(i => i.id === id);
@@ -901,7 +830,6 @@
             }
         }
 
-        // THAO TÁC MƯỢN TRẢ
         function openBorrowModal(itemId) {
             const item = items.find(i => i.id === itemId);
             if (!item) return;
@@ -1039,7 +967,6 @@
             }
         }
 
-        // THAO TÁC GHI CHÚ
         function openNoteModal() {
             if (!isAdmin) return;
             document.getElementById('note-id').value = '';
@@ -1096,7 +1023,6 @@
             }
         }
 
-        // TIỆN ÍCH MODAL
         function openModal(id) {
             document.getElementById(id).classList.remove('hidden');
         }
