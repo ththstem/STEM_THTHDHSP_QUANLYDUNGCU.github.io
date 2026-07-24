@@ -59,7 +59,6 @@
                         <i class="fa-solid fa-cloud-arrow-down"></i>
                         <span>Dữ liệu đồng bộ từ GitHub (data.json)</span>
                     </p>
-                    <!-- THỜI GIAN CẬP NHẬT REALTIME -->
                     <p class="text-[11px] text-emerald-400 font-semibold mt-0.5 flex items-center gap-1">
                         <i class="fa-solid fa-clock"></i>
                         <span>Cập nhật lần cuối: <span id="last-updated-time" class="text-white font-bold">Chưa có dữ liệu</span></span>
@@ -173,6 +172,8 @@
                             <th class="p-4">Trạng thái</th>
                             <th class="p-4">Ghi chú khi trả</th>
                             <th class="p-4">Minh chứng trả đồ</th>
+                            <!-- THÊM CỘT THỜI GIAN CẬP NHẬT -->
+                            <th class="p-4 text-emerald-400"><i class="fa-solid fa-clock mr-1"></i>Lần cuối cập nhật</th>
                             <th class="p-4 text-center">Thao tác</th>
                         </tr>
                     </thead>
@@ -623,7 +624,7 @@
             });
         }
 
-        // RENDER BẢNG NHẬT KÝ MƯỢN TRẢ
+        // RENDER BẢNG NHẬT KÝ MƯỢN TRẢ (CÓ THỜI GIAN CẬP NHẬT TỪNG DÒNG)
         function renderLogs() {
             const tableBody = document.getElementById('logs-table-body');
             if(!tableBody) return;
@@ -638,6 +639,11 @@
                     ? `<a href="${log.proofImg}" target="_blank" class="inline-block w-10 h-10 rounded-lg overflow-hidden border border-slate-700"><img src="${log.proofImg}" class="w-full h-full object-cover"></a>`
                     : `<span class="text-slate-500 italic text-xs">Chưa có ảnh</span>`;
 
+                // HIỂN THỊ THỜI GIAN CẬP NHẬT TỪNG DÒNG
+                const updatedTimeHtml = log.updatedAt 
+                    ? `<span class="text-xs font-mono text-emerald-400 font-semibold bg-emerald-950/40 px-2.5 py-1 rounded-md border border-emerald-800/40">${log.updatedAt}</span>`
+                    : `<span class="text-slate-500 italic text-xs">Chưa ghi nhận</span>`;
+
                 tableBody.innerHTML += `
                     <tr class="hover:bg-slate-800/30 transition">
                         <td class="p-4 font-bold text-white">${log.name}</td>
@@ -650,6 +656,7 @@
                         <td class="p-4">${statusBadge}</td>
                         <td class="p-4 text-xs text-slate-300 max-w-[150px] truncate">${log.note || '---'}</td>
                         <td class="p-4">${proofHtml}</td>
+                        <td class="p-4">${updatedTimeHtml}</td>
                         <td class="p-4 text-center">
                             <div class="flex items-center justify-center gap-2">
                                 <button onclick="openReturnModal(${log.id})" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 rounded-lg text-xs font-medium transition flex items-center gap-1">
@@ -771,7 +778,7 @@
             }
         }
 
-        // THAO TÁC MƯỢN TRẢ
+        // THAO TÁC MƯỢN TRẢ - LƯU THỜI GIAN CẬP NHẬT REALTIME CHO DÒNG
         function openBorrowModal(itemId) {
             const item = items.find(i => i.id === itemId);
             if (!item) return;
@@ -799,6 +806,8 @@
 
             if (!item) return;
 
+            const currentTime = getFormattedDateTime();
+
             const newLog = {
                 id: Date.now(),
                 itemId: item.id,
@@ -811,7 +820,8 @@
                 returnDate: document.getElementById('borrow-return-date').value,
                 status: 'Đang mượn',
                 note: '',
-                proofImg: ''
+                proofImg: '',
+                updatedAt: currentTime // Lưu Giờ:Phút:Giây Ngày/Tháng/Năm tạo phiếu mượn
             };
 
             logs.unshift(newLog);
@@ -883,6 +893,8 @@
             log.status = isReturned ? 'Đã trả đồ' : 'Đang mượn';
             log.note = document.getElementById('return-note').value;
             if(selectedReturnImgBase64) log.proofImg = selectedReturnImgBase64;
+
+            log.updatedAt = getFormattedDateTime(); // Cập nhật lại Giờ:Phút:Giây mỗi khi bấm nút Sửa / Trả đồ
 
             syncBorrowedCount();
             saveDataToLocal();
