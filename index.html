@@ -214,7 +214,7 @@
                     <i class="fa-solid fa-user-shield"></i>
                 </div>
                 <h3 class="text-lg font-bold text-white">Đăng Nhập Admin</h3>
-                <p class="text-xs text-slate-400">Dành cho BCN/ BĐH CLB STEM THTH</p>
+                <p class="text-xs text-slate-400">Dành cho Ban Chủ Nhiệm CLB STEM THTH</p>
             </div>
             
             <form onsubmit="handleAdminLogin(event)" class="space-y-4">
@@ -399,10 +399,9 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC DỒN VÀO MỘT FILE -->
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-        // MÃ PIN ADMIN ĐƯỢC THIẾT LẬP THEO YÊU CẦU
-        const ADMIN_PIN = "ththstem.admin@03092020";
+        const ADMIN_PIN_HASH = "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92";
         let isAdmin = false;
 
         let items = [];
@@ -415,10 +414,18 @@
         let selectedImgBase64 = null;
         let selectedReturnImgBase64 = null;
 
+        // HÀM HASH BẢO MẬT SHA-256
+        async function hashPIN(pin) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(pin);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
         // XỬ LÝ ĐĂNG NHẬP / ĐĂNG XUẤT ADMIN
         function toggleAdminLogin() {
             if (isAdmin) {
-                // Đăng xuất
                 isAdmin = false;
                 updateAdminUI();
                 alert("Đã đăng xuất khỏi chế độ Admin!");
@@ -426,16 +433,17 @@
                     switchTab('kho');
                 }
             } else {
-                // Mở modal đăng nhập
                 document.getElementById('admin-pin-input').value = '';
                 openModal('admin-login-modal');
             }
         }
 
-        function handleAdminLogin(e) {
+        async function handleAdminLogin(e) {
             e.preventDefault();
-            const pin = document.getElementById('admin-pin-input').value.trim();
-            if (pin === ADMIN_PIN) {
+            const pinInput = document.getElementById('admin-pin-input').value.trim();
+            const inputHash = await hashPIN(pinInput);
+
+            if (inputHash === ADMIN_PIN_HASH) {
                 isAdmin = true;
                 closeModal('admin-login-modal');
                 updateAdminUI();
@@ -594,7 +602,6 @@
 
         // CHUYỂN TAB - PHÂN QUYỀN VỚI TAB GHI CHÚ
         function switchTab(tabName) {
-            // Kiểm tra phân quyền khi vào tab ghi chú
             if (tabName === 'ghichu' && !isAdmin) {
                 alert("Chỉ Ban Chủ Nhiệm (Admin) mới có quyền truy cập vào Sổ Ghi Chú CLB!");
                 document.getElementById('admin-pin-input').value = '';
@@ -631,7 +638,7 @@
             renderItems();
         }
 
-        // RENDER DANH SÁCH THIẾT BỊ (CÓ BẢO VỆ ADMIN UI)
+        // RENDER DANH SÁCH THIẾT BỊ
         function renderItems() {
             const grid = document.getElementById('equipment-grid');
             const searchVal = (document.getElementById('search-input')?.value || '').toLowerCase();
@@ -666,7 +673,6 @@
                     ? `<button onclick="openBorrowModal(${item.id})" class="flex-1 custom-blue text-white py-2.5 rounded-xl text-xs font-semibold shadow-lg shadow-cyan-500/20 hover:scale-[1.02] transition">Mượn đồ</button>`
                     : `<button disabled class="flex-1 bg-slate-800 text-slate-500 py-2.5 rounded-xl text-xs font-semibold cursor-not-allowed">Không thể mượn</button>`;
 
-                // UI ADMIN VS HỌC SINH
                 const adminImageEdit = isAdmin 
                     ? `<label class="absolute bottom-2 right-2 bg-black/60 hover:bg-black text-xs text-white px-3 py-1 rounded-lg backdrop-blur-md transition cursor-pointer flex items-center gap-1">
                         <i class="fa-solid fa-pen-to-square"></i> Đổi ảnh
@@ -732,7 +738,7 @@
             });
         }
 
-        // RENDER BẢNG NHẬT KÝ MƯỢN TRẢ (PHÂN QUYỀN ADMIN XỬ LÝ)
+        // RENDER BẢNG NHẬT KÝ MƯỢN TRẢ
         function renderLogs() {
             const tableBody = document.getElementById('logs-table-body');
             if(!tableBody) return;
@@ -806,7 +812,7 @@
             });
         }
 
-        // THAO TÁC TRÊN KHO (CÓ BẢO VỆ QUYỀN ADMIN)
+        // THAO TÁC TRÊN KHO
         function updateQty(id, delta) {
             if (!isAdmin) return;
             const item = items.find(i => i.id === id);
